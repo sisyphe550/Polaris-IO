@@ -1,0 +1,14 @@
+Name: file-api
+Host: 0.0.0.0
+Port: 8891 # 假设文件服务端口是 8891
+
+# ... 其他配置 (Auth, DB 等) ...
+
+# 新增 S3 (Garage) 配置
+S3:
+  Endpoint: "127.0.0.1:3900"  # Garage 的 S3 API 端口
+  Region: "us-east-1"         # 我们在配置文件里写的 region
+  Bucket: "whiteboard-assets" # 你刚刚创建的桶名
+  AccessKey: "GK0a9c066cbf353922f110e794" # 👈 填入日志里的 Key ID
+  SecretKey: "34405fa712bd5c8054b50597228dab1ccee6ae8f3ca9d3811a4b7c22a2d59523" # 👈 填入日志里的 Secret key
+  UseSSL: false               # 本地开发通常不开启 SSL

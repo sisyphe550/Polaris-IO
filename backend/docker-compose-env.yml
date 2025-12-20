@@ -1,0 +1,97 @@
+services:
+  #jaeger链路追踪 — Jaeger for tracing
+  jaeger:
+    image: jaegertracing/all-in-one:1.38
+    container_name: wb-jaeger
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686" # Web UI
+      - "14268:14268"
+      - "9411:9411"
+    networks:
+      - wb-net
+
+  #prometheus监控 — Prometheus for monitoring
+  prometheus:
+    image: prom/prometheus:v2.39.1
+    container_name: wb-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - wb-net
+  # 1. 服务注册发现 (Go-zero 强依赖)
+  etcd:
+    # 替换为 quay.io 镜像源，避开 bitnami 的限制
+    image: quay.io/coreos/etcd:v3.5.5
+    container_name: wb-etcd
+    # environment:
+    #   - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+    #   - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+    ports:
+      - "2379:2379"
+    command:
+      - /usr/local/bin/etcd
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://etcd:2379
+    networks:
+      - wb-net
+
+  # 2. 关系型数据库
+  mysql:
+    image: mysql:8.0
+    container_name: wb-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      # MYSQL_DATABASE: whiteboard
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+      # - ./sql:/docker-entrypoint-initdb.d # 自动执行初始化SQL
+    command: 
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --explicit_defaults_for_timestamp=true
+      --lower_case_table_names=1
+    networks:
+      - wb-net
+
+  # 3. 缓存与消息
+  redis:
+    image: redis:alpine
+    container_name: wb-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis:/data
+    networks:
+      - wb-net
+
+  # 4. 对象存储 (RustFS - Garage)
+  garage:
+    image: dxflrs/garage:v2.1.0
+    container_name: wb-storage
+    ports:
+      - "3900:3900" # S3 API
+      - "3901:3901" # RPC
+      - "3902:3902" # Web Website (Optional)
+    volumes:
+      - ./data/garage/meta:/var/lib/garage/meta
+      - ./data/garage/data:/var/lib/garage/data
+      - ./deploy/config/garage.toml:/etc/garage.toml:ro
+    networks:
+      - wb-net
+    environment:
+      RUST_LOG: info
+
+networks:
+  wb-net:
+    driver: bridge
+    name: whiteboard-net

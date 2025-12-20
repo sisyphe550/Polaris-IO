@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package pb;
+option go_package = "./pb";
+
+// 1. 定义生成 Token 的请求与响应
+message GenerateTokenReq {
+  int64 userId = 1;
+}
+message GenerateTokenResp {
+  string accessToken = 1;
+  int64  accessExpire = 2;
+  int64  refreshAfter = 3;
+}
+
+// 2. 定义登录逻辑
+message LoginReq {
+  string  authType = 1; // mobile, wx, etc.
+  string  authKey = 2;  // 手机号 或 openid
+  string  password = 3; 
+}
+message LoginResp {
+  string accessToken = 1;
+  int64  accessExpire = 2;
+  int64  refreshAfter = 3;
+}
+
+// 3. 定义获取用户信息
+message GetUserInfoReq {
+  int64 userId = 1;
+}
+message GetUserInfoResp {
+  int64 id = 1;
+  string username = 2;
+  string avatar = 3;
+}
+
+service usercenter {
+  // 生成 Token (核心鉴权逻辑)
+  rpc GenerateToken(GenerateTokenReq) returns(GenerateTokenResp);
+  // 登录
+  rpc Login(LoginReq) returns(LoginResp);
+  // 获取信息
+  rpc GetUserInfo(GetUserInfoReq) returns(GetUserInfoResp);
+}

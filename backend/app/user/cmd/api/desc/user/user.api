@@ -1,0 +1,56 @@
+syntax = "v1"
+
+info (
+	title:   "用户中心服务"
+	desc:    "负责用户注册、登录、信息管理"
+	author:  "YourName"
+	email:   "your_email@example.com"
+	version: "v1"
+)
+
+type (
+	// 注册请求
+	RegisterReq {
+		Mobile   string `json:"mobile"`
+		Password string `json:"password"`
+	}
+	RegisterResp {
+		AccessToken  string `json:"accessToken"`
+		AccessExpire int64  `json:"accessExpire"`
+		RefreshAfter int64  `json:"refreshAfter"`
+	}
+
+	// 登录请求
+	LoginReq {
+		Mobile   string `json:"mobile"`
+		Password string `json:"password"`
+	}
+	LoginResp {
+		AccessToken  string `json:"accessToken"`
+		AccessExpire int64  `json:"accessExpire"`
+		RefreshAfter int64  `json:"refreshAfter"`
+	}
+
+	// 微信小程序登录（可选，参考Looklook）
+	WxMiniAuthReq {
+		Code          string `json:"code"`
+		IV            string `json:"iv"`
+		EncryptedData string `json:"encryptedData"`
+	}
+	WxMiniAuthResp {
+		AccessToken  string `json:"accessToken"`
+		AccessExpire int64  `json:"accessExpire"`
+		RefreshAfter int64  `json:"refreshAfter"`
+	}
+
+	// 用户详情
+	UserInfoReq {
+	}
+	UserInfoResp {
+		Id       int64  `json:"id"`
+		Mobile   string `json:"mobile"`
+		Nickname string `json:"nickname"`
+		Avatar   string `json:"avatar"`
+		Info     string `json:"info"`
+	}
+)
