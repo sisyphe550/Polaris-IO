@@ -19,21 +19,24 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Usercenter_GenerateToken_FullMethodName = "/pb.usercenter/GenerateToken"
-	Usercenter_Login_FullMethodName         = "/pb.usercenter/Login"
-	Usercenter_GetUserInfo_FullMethodName   = "/pb.usercenter/GetUserInfo"
+	Usercenter_Login_FullMethodName         = "/pb.usercenter/login"
+	Usercenter_Register_FullMethodName      = "/pb.usercenter/register"
+	Usercenter_GetUserInfo_FullMethodName   = "/pb.usercenter/getUserInfo"
+	Usercenter_GenerateToken_FullMethodName = "/pb.usercenter/generateToken"
 )
 
 // UsercenterClient is the client API for Usercenter service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UsercenterClient interface {
-	// 生成 Token (核心鉴权逻辑)
-	GenerateToken(ctx context.Context, in *GenerateTokenReq, opts ...grpc.CallOption) (*GenerateTokenResp, error)
 	// 登录
 	Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginResp, error)
-	// 获取信息
+	// 注册
+	Register(ctx context.Context, in *RegisterReq, opts ...grpc.CallOption) (*RegisterResp, error)
+	// 获取用户信息
 	GetUserInfo(ctx context.Context, in *GetUserInfoReq, opts ...grpc.CallOption) (*GetUserInfoResp, error)
+	// 生成 Token (供内部逻辑调用)
+	GenerateToken(ctx context.Context, in *GenerateTokenReq, opts ...grpc.CallOption) (*GenerateTokenResp, error)
 }
 
 type usercenterClient struct {
@@ -44,20 +47,20 @@ func NewUsercenterClient(cc grpc.ClientConnInterface) UsercenterClient {
 	return &usercenterClient{cc}
 }
 
-func (c *usercenterClient) GenerateToken(ctx context.Context, in *GenerateTokenReq, opts ...grpc.CallOption) (*GenerateTokenResp, error) {
+func (c *usercenterClient) Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GenerateTokenResp)
-	err := c.cc.Invoke(ctx, Usercenter_GenerateToken_FullMethodName, in, out, cOpts...)
+	out := new(LoginResp)
+	err := c.cc.Invoke(ctx, Usercenter_Login_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *usercenterClient) Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginResp, error) {
+func (c *usercenterClient) Register(ctx context.Context, in *RegisterReq, opts ...grpc.CallOption) (*RegisterResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(LoginResp)
-	err := c.cc.Invoke(ctx, Usercenter_Login_FullMethodName, in, out, cOpts...)
+	out := new(RegisterResp)
+	err := c.cc.Invoke(ctx, Usercenter_Register_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -74,16 +77,28 @@ func (c *usercenterClient) GetUserInfo(ctx context.Context, in *GetUserInfoReq, 
 	return out, nil
 }
 
+func (c *usercenterClient) GenerateToken(ctx context.Context, in *GenerateTokenReq, opts ...grpc.CallOption) (*GenerateTokenResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenerateTokenResp)
+	err := c.cc.Invoke(ctx, Usercenter_GenerateToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UsercenterServer is the server API for Usercenter service.
 // All implementations must embed UnimplementedUsercenterServer
 // for forward compatibility.
 type UsercenterServer interface {
-	// 生成 Token (核心鉴权逻辑)
-	GenerateToken(context.Context, *GenerateTokenReq) (*GenerateTokenResp, error)
 	// 登录
 	Login(context.Context, *LoginReq) (*LoginResp, error)
-	// 获取信息
+	// 注册
+	Register(context.Context, *RegisterReq) (*RegisterResp, error)
+	// 获取用户信息
 	GetUserInfo(context.Context, *GetUserInfoReq) (*GetUserInfoResp, error)
+	// 生成 Token (供内部逻辑调用)
+	GenerateToken(context.Context, *GenerateTokenReq) (*GenerateTokenResp, error)
 	mustEmbedUnimplementedUsercenterServer()
 }
 
@@ -94,14 +109,17 @@ type UsercenterServer interface {
 // pointer dereference when methods are called.
 type UnimplementedUsercenterServer struct{}
 
-func (UnimplementedUsercenterServer) GenerateToken(context.Context, *GenerateTokenReq) (*GenerateTokenResp, error) {
-	return nil, status.Error(codes.Unimplemented, "method GenerateToken not implemented")
-}
 func (UnimplementedUsercenterServer) Login(context.Context, *LoginReq) (*LoginResp, error) {
 	return nil, status.Error(codes.Unimplemented, "method Login not implemented")
 }
+func (UnimplementedUsercenterServer) Register(context.Context, *RegisterReq) (*RegisterResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method Register not implemented")
+}
 func (UnimplementedUsercenterServer) GetUserInfo(context.Context, *GetUserInfoReq) (*GetUserInfoResp, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUserInfo not implemented")
+}
+func (UnimplementedUsercenterServer) GenerateToken(context.Context, *GenerateTokenReq) (*GenerateTokenResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method GenerateToken not implemented")
 }
 func (UnimplementedUsercenterServer) mustEmbedUnimplementedUsercenterServer() {}
 func (UnimplementedUsercenterServer) testEmbeddedByValue()                    {}
@@ -124,24 +142,6 @@ func RegisterUsercenterServer(s grpc.ServiceRegistrar, srv UsercenterServer) {
 	s.RegisterService(&Usercenter_ServiceDesc, srv)
 }
 
-func _Usercenter_GenerateToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GenerateTokenReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UsercenterServer).GenerateToken(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Usercenter_GenerateToken_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsercenterServer).GenerateToken(ctx, req.(*GenerateTokenReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Usercenter_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LoginReq)
 	if err := dec(in); err != nil {
@@ -156,6 +156,24 @@ func _Usercenter_Login_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UsercenterServer).Login(ctx, req.(*LoginReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Usercenter_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsercenterServer).Register(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Usercenter_Register_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsercenterServer).Register(ctx, req.(*RegisterReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -178,6 +196,24 @@ func _Usercenter_GetUserInfo_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Usercenter_GenerateToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateTokenReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsercenterServer).GenerateToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Usercenter_GenerateToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsercenterServer).GenerateToken(ctx, req.(*GenerateTokenReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Usercenter_ServiceDesc is the grpc.ServiceDesc for Usercenter service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -186,16 +222,20 @@ var Usercenter_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*UsercenterServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GenerateToken",
-			Handler:    _Usercenter_GenerateToken_Handler,
-		},
-		{
-			MethodName: "Login",
+			MethodName: "login",
 			Handler:    _Usercenter_Login_Handler,
 		},
 		{
-			MethodName: "GetUserInfo",
+			MethodName: "register",
+			Handler:    _Usercenter_Register_Handler,
+		},
+		{
+			MethodName: "getUserInfo",
 			Handler:    _Usercenter_GetUserInfo_Handler,
+		},
+		{
+			MethodName: "generateToken",
+			Handler:    _Usercenter_GenerateToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -21,28 +21,31 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// 1. 定义生成 Token 的请求与响应
-type GenerateTokenReq struct {
+type User struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Mobile        string                 `protobuf:"bytes,2,opt,name=mobile,proto3" json:"mobile,omitempty"`
+	Nickname      string                 `protobuf:"bytes,3,opt,name=nickname,proto3" json:"nickname,omitempty"`
+	Avatar        string                 `protobuf:"bytes,4,opt,name=avatar,proto3" json:"avatar,omitempty"`
+	Info          string                 `protobuf:"bytes,5,opt,name=info,proto3" json:"info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GenerateTokenReq) Reset() {
-	*x = GenerateTokenReq{}
+func (x *User) Reset() {
+	*x = User{}
 	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GenerateTokenReq) String() string {
+func (x *User) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GenerateTokenReq) ProtoMessage() {}
+func (*User) ProtoMessage() {}
 
-func (x *GenerateTokenReq) ProtoReflect() protoreflect.Message {
+func (x *User) ProtoReflect() protoreflect.Message {
 	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -54,19 +57,124 @@ func (x *GenerateTokenReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GenerateTokenReq.ProtoReflect.Descriptor instead.
-func (*GenerateTokenReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use User.ProtoReflect.Descriptor instead.
+func (*User) Descriptor() ([]byte, []int) {
 	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GenerateTokenReq) GetUserId() int64 {
+func (x *User) GetId() int64 {
 	if x != nil {
-		return x.UserId
+		return x.Id
 	}
 	return 0
 }
 
-type GenerateTokenResp struct {
+func (x *User) GetMobile() string {
+	if x != nil {
+		return x.Mobile
+	}
+	return ""
+}
+
+func (x *User) GetNickname() string {
+	if x != nil {
+		return x.Nickname
+	}
+	return ""
+}
+
+func (x *User) GetAvatar() string {
+	if x != nil {
+		return x.Avatar
+	}
+	return ""
+}
+
+func (x *User) GetInfo() string {
+	if x != nil {
+		return x.Info
+	}
+	return ""
+}
+
+// 1. 注册请求
+type RegisterReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Mobile        string                 `protobuf:"bytes,1,opt,name=mobile,proto3" json:"mobile,omitempty"`
+	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	Nickname      string                 `protobuf:"bytes,3,opt,name=nickname,proto3" json:"nickname,omitempty"` // 可选，默认为手机号或随机生成
+	AuthKey       string                 `protobuf:"bytes,4,opt,name=authKey,proto3" json:"authKey,omitempty"`   // 认证标识 (手机号/OpenId)
+	AuthType      string                 `protobuf:"bytes,5,opt,name=authType,proto3" json:"authType,omitempty"` // 认证类型 (mobile/wx)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterReq) Reset() {
+	*x = RegisterReq{}
+	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterReq) ProtoMessage() {}
+
+func (x *RegisterReq) ProtoReflect() protoreflect.Message {
+	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterReq.ProtoReflect.Descriptor instead.
+func (*RegisterReq) Descriptor() ([]byte, []int) {
+	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *RegisterReq) GetMobile() string {
+	if x != nil {
+		return x.Mobile
+	}
+	return ""
+}
+
+func (x *RegisterReq) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+func (x *RegisterReq) GetNickname() string {
+	if x != nil {
+		return x.Nickname
+	}
+	return ""
+}
+
+func (x *RegisterReq) GetAuthKey() string {
+	if x != nil {
+		return x.AuthKey
+	}
+	return ""
+}
+
+func (x *RegisterReq) GetAuthType() string {
+	if x != nil {
+		return x.AuthType
+	}
+	return ""
+}
+
+type RegisterResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AccessToken   string                 `protobuf:"bytes,1,opt,name=accessToken,proto3" json:"accessToken,omitempty"`
 	AccessExpire  int64                  `protobuf:"varint,2,opt,name=accessExpire,proto3" json:"accessExpire,omitempty"`
@@ -75,21 +183,21 @@ type GenerateTokenResp struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GenerateTokenResp) Reset() {
-	*x = GenerateTokenResp{}
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[1]
+func (x *RegisterResp) Reset() {
+	*x = RegisterResp{}
+	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GenerateTokenResp) String() string {
+func (x *RegisterResp) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GenerateTokenResp) ProtoMessage() {}
+func (*RegisterResp) ProtoMessage() {}
 
-func (x *GenerateTokenResp) ProtoReflect() protoreflect.Message {
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[1]
+func (x *RegisterResp) ProtoReflect() protoreflect.Message {
+	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -100,45 +208,45 @@ func (x *GenerateTokenResp) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GenerateTokenResp.ProtoReflect.Descriptor instead.
-func (*GenerateTokenResp) Descriptor() ([]byte, []int) {
-	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{1}
+// Deprecated: Use RegisterResp.ProtoReflect.Descriptor instead.
+func (*RegisterResp) Descriptor() ([]byte, []int) {
+	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *GenerateTokenResp) GetAccessToken() string {
+func (x *RegisterResp) GetAccessToken() string {
 	if x != nil {
 		return x.AccessToken
 	}
 	return ""
 }
 
-func (x *GenerateTokenResp) GetAccessExpire() int64 {
+func (x *RegisterResp) GetAccessExpire() int64 {
 	if x != nil {
 		return x.AccessExpire
 	}
 	return 0
 }
 
-func (x *GenerateTokenResp) GetRefreshAfter() int64 {
+func (x *RegisterResp) GetRefreshAfter() int64 {
 	if x != nil {
 		return x.RefreshAfter
 	}
 	return 0
 }
 
-// 2. 定义登录逻辑
+// 2. 登录请求
 type LoginReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AuthType      string                 `protobuf:"bytes,1,opt,name=authType,proto3" json:"authType,omitempty"` // mobile, wx, etc.
-	AuthKey       string                 `protobuf:"bytes,2,opt,name=authKey,proto3" json:"authKey,omitempty"`   // 手机号 或 openid
-	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
+	AuthType      string                 `protobuf:"bytes,1,opt,name=authType,proto3" json:"authType,omitempty"` // mobile/wx
+	AuthKey       string                 `protobuf:"bytes,2,opt,name=authKey,proto3" json:"authKey,omitempty"`   // 手机号/OpenId
+	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"` // 仅 mobile 类型需要
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *LoginReq) Reset() {
 	*x = LoginReq{}
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[2]
+	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -150,7 +258,7 @@ func (x *LoginReq) String() string {
 func (*LoginReq) ProtoMessage() {}
 
 func (x *LoginReq) ProtoReflect() protoreflect.Message {
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[2]
+	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -163,7 +271,7 @@ func (x *LoginReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginReq.ProtoReflect.Descriptor instead.
 func (*LoginReq) Descriptor() ([]byte, []int) {
-	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{2}
+	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *LoginReq) GetAuthType() string {
@@ -198,7 +306,7 @@ type LoginResp struct {
 
 func (x *LoginResp) Reset() {
 	*x = LoginResp{}
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[3]
+	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -210,7 +318,7 @@ func (x *LoginResp) String() string {
 func (*LoginResp) ProtoMessage() {}
 
 func (x *LoginResp) ProtoReflect() protoreflect.Message {
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[3]
+	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -223,7 +331,7 @@ func (x *LoginResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginResp.ProtoReflect.Descriptor instead.
 func (*LoginResp) Descriptor() ([]byte, []int) {
-	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{3}
+	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *LoginResp) GetAccessToken() string {
@@ -247,7 +355,7 @@ func (x *LoginResp) GetRefreshAfter() int64 {
 	return 0
 }
 
-// 3. 定义获取用户信息
+// 3. 获取用户信息
 type GetUserInfoReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
@@ -257,7 +365,7 @@ type GetUserInfoReq struct {
 
 func (x *GetUserInfoReq) Reset() {
 	*x = GetUserInfoReq{}
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[4]
+	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -269,7 +377,7 @@ func (x *GetUserInfoReq) String() string {
 func (*GetUserInfoReq) ProtoMessage() {}
 
 func (x *GetUserInfoReq) ProtoReflect() protoreflect.Message {
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[4]
+	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -282,7 +390,7 @@ func (x *GetUserInfoReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserInfoReq.ProtoReflect.Descriptor instead.
 func (*GetUserInfoReq) Descriptor() ([]byte, []int) {
-	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{4}
+	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetUserInfoReq) GetUserId() int64 {
@@ -294,16 +402,14 @@ func (x *GetUserInfoReq) GetUserId() int64 {
 
 type GetUserInfoResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	Avatar        string                 `protobuf:"bytes,3,opt,name=avatar,proto3" json:"avatar,omitempty"`
+	User          *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetUserInfoResp) Reset() {
 	*x = GetUserInfoResp{}
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[5]
+	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -315,7 +421,7 @@ func (x *GetUserInfoResp) String() string {
 func (*GetUserInfoResp) ProtoMessage() {}
 
 func (x *GetUserInfoResp) ProtoReflect() protoreflect.Message {
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[5]
+	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -328,38 +434,139 @@ func (x *GetUserInfoResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserInfoResp.ProtoReflect.Descriptor instead.
 func (*GetUserInfoResp) Descriptor() ([]byte, []int) {
-	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{5}
+	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *GetUserInfoResp) GetId() int64 {
+func (x *GetUserInfoResp) GetUser() *User {
 	if x != nil {
-		return x.Id
+		return x.User
+	}
+	return nil
+}
+
+// 4. 生成 Token (内部通用方法)
+type GenerateTokenReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GenerateTokenReq) Reset() {
+	*x = GenerateTokenReq{}
+	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateTokenReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateTokenReq) ProtoMessage() {}
+
+func (x *GenerateTokenReq) ProtoReflect() protoreflect.Message {
+	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenerateTokenReq.ProtoReflect.Descriptor instead.
+func (*GenerateTokenReq) Descriptor() ([]byte, []int) {
+	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *GenerateTokenReq) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
 	}
 	return 0
 }
 
-func (x *GetUserInfoResp) GetUsername() string {
+type GenerateTokenResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccessToken   string                 `protobuf:"bytes,1,opt,name=accessToken,proto3" json:"accessToken,omitempty"`
+	AccessExpire  int64                  `protobuf:"varint,2,opt,name=accessExpire,proto3" json:"accessExpire,omitempty"`
+	RefreshAfter  int64                  `protobuf:"varint,3,opt,name=refreshAfter,proto3" json:"refreshAfter,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GenerateTokenResp) Reset() {
+	*x = GenerateTokenResp{}
+	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateTokenResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateTokenResp) ProtoMessage() {}
+
+func (x *GenerateTokenResp) ProtoReflect() protoreflect.Message {
+	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[8]
 	if x != nil {
-		return x.Username
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenerateTokenResp.ProtoReflect.Descriptor instead.
+func (*GenerateTokenResp) Descriptor() ([]byte, []int) {
+	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *GenerateTokenResp) GetAccessToken() string {
+	if x != nil {
+		return x.AccessToken
 	}
 	return ""
 }
 
-func (x *GetUserInfoResp) GetAvatar() string {
+func (x *GenerateTokenResp) GetAccessExpire() int64 {
 	if x != nil {
-		return x.Avatar
+		return x.AccessExpire
 	}
-	return ""
+	return 0
+}
+
+func (x *GenerateTokenResp) GetRefreshAfter() int64 {
+	if x != nil {
+		return x.RefreshAfter
+	}
+	return 0
 }
 
 var File_app_user_cmd_rpc_pb_usercenter_proto protoreflect.FileDescriptor
 
 const file_app_user_cmd_rpc_pb_usercenter_proto_rawDesc = "" +
 	"\n" +
-	"$app/user/cmd/rpc/pb/usercenter.proto\x12\x02pb\"*\n" +
-	"\x10GenerateTokenReq\x12\x16\n" +
-	"\x06userId\x18\x01 \x01(\x03R\x06userId\"}\n" +
-	"\x11GenerateTokenResp\x12 \n" +
+	"$app/user/cmd/rpc/pb/usercenter.proto\x12\x02pb\"v\n" +
+	"\x04User\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x06mobile\x18\x02 \x01(\tR\x06mobile\x12\x1a\n" +
+	"\bnickname\x18\x03 \x01(\tR\bnickname\x12\x16\n" +
+	"\x06avatar\x18\x04 \x01(\tR\x06avatar\x12\x12\n" +
+	"\x04info\x18\x05 \x01(\tR\x04info\"\x93\x01\n" +
+	"\vRegisterReq\x12\x16\n" +
+	"\x06mobile\x18\x01 \x01(\tR\x06mobile\x12\x1a\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x1a\n" +
+	"\bnickname\x18\x03 \x01(\tR\bnickname\x12\x18\n" +
+	"\aauthKey\x18\x04 \x01(\tR\aauthKey\x12\x1a\n" +
+	"\bauthType\x18\x05 \x01(\tR\bauthType\"x\n" +
+	"\fRegisterResp\x12 \n" +
 	"\vaccessToken\x18\x01 \x01(\tR\vaccessToken\x12\"\n" +
 	"\faccessExpire\x18\x02 \x01(\x03R\faccessExpire\x12\"\n" +
 	"\frefreshAfter\x18\x03 \x01(\x03R\frefreshAfter\"\\\n" +
@@ -372,16 +579,21 @@ const file_app_user_cmd_rpc_pb_usercenter_proto_rawDesc = "" +
 	"\faccessExpire\x18\x02 \x01(\x03R\faccessExpire\x12\"\n" +
 	"\frefreshAfter\x18\x03 \x01(\x03R\frefreshAfter\"(\n" +
 	"\x0eGetUserInfoReq\x12\x16\n" +
-	"\x06userId\x18\x01 \x01(\x03R\x06userId\"U\n" +
-	"\x0fGetUserInfoResp\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12\x16\n" +
-	"\x06avatar\x18\x03 \x01(\tR\x06avatar2\xa8\x01\n" +
+	"\x06userId\x18\x01 \x01(\x03R\x06userId\"/\n" +
+	"\x0fGetUserInfoResp\x12\x1c\n" +
+	"\x04user\x18\x01 \x01(\v2\b.pb.UserR\x04user\"*\n" +
+	"\x10GenerateTokenReq\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\x03R\x06userId\"}\n" +
+	"\x11GenerateTokenResp\x12 \n" +
+	"\vaccessToken\x18\x01 \x01(\tR\vaccessToken\x12\"\n" +
+	"\faccessExpire\x18\x02 \x01(\x03R\faccessExpire\x12\"\n" +
+	"\frefreshAfter\x18\x03 \x01(\x03R\frefreshAfter2\xd7\x01\n" +
 	"\n" +
-	"usercenter\x12<\n" +
-	"\rGenerateToken\x12\x14.pb.GenerateTokenReq\x1a\x15.pb.GenerateTokenResp\x12$\n" +
-	"\x05Login\x12\f.pb.LoginReq\x1a\r.pb.LoginResp\x126\n" +
-	"\vGetUserInfo\x12\x12.pb.GetUserInfoReq\x1a\x13.pb.GetUserInfoRespB\x06Z\x04./pbb\x06proto3"
+	"usercenter\x12$\n" +
+	"\x05login\x12\f.pb.LoginReq\x1a\r.pb.LoginResp\x12-\n" +
+	"\bregister\x12\x0f.pb.RegisterReq\x1a\x10.pb.RegisterResp\x126\n" +
+	"\vgetUserInfo\x12\x12.pb.GetUserInfoReq\x1a\x13.pb.GetUserInfoResp\x12<\n" +
+	"\rgenerateToken\x12\x14.pb.GenerateTokenReq\x1a\x15.pb.GenerateTokenRespB\x06Z\x04./pbb\x06proto3"
 
 var (
 	file_app_user_cmd_rpc_pb_usercenter_proto_rawDescOnce sync.Once
@@ -395,27 +607,33 @@ func file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP() []byte {
 	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescData
 }
 
-var file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_app_user_cmd_rpc_pb_usercenter_proto_goTypes = []any{
-	(*GenerateTokenReq)(nil),  // 0: pb.GenerateTokenReq
-	(*GenerateTokenResp)(nil), // 1: pb.GenerateTokenResp
-	(*LoginReq)(nil),          // 2: pb.LoginReq
-	(*LoginResp)(nil),         // 3: pb.LoginResp
-	(*GetUserInfoReq)(nil),    // 4: pb.GetUserInfoReq
-	(*GetUserInfoResp)(nil),   // 5: pb.GetUserInfoResp
+	(*User)(nil),              // 0: pb.User
+	(*RegisterReq)(nil),       // 1: pb.RegisterReq
+	(*RegisterResp)(nil),      // 2: pb.RegisterResp
+	(*LoginReq)(nil),          // 3: pb.LoginReq
+	(*LoginResp)(nil),         // 4: pb.LoginResp
+	(*GetUserInfoReq)(nil),    // 5: pb.GetUserInfoReq
+	(*GetUserInfoResp)(nil),   // 6: pb.GetUserInfoResp
+	(*GenerateTokenReq)(nil),  // 7: pb.GenerateTokenReq
+	(*GenerateTokenResp)(nil), // 8: pb.GenerateTokenResp
 }
 var file_app_user_cmd_rpc_pb_usercenter_proto_depIdxs = []int32{
-	0, // 0: pb.usercenter.GenerateToken:input_type -> pb.GenerateTokenReq
-	2, // 1: pb.usercenter.Login:input_type -> pb.LoginReq
-	4, // 2: pb.usercenter.GetUserInfo:input_type -> pb.GetUserInfoReq
-	1, // 3: pb.usercenter.GenerateToken:output_type -> pb.GenerateTokenResp
-	3, // 4: pb.usercenter.Login:output_type -> pb.LoginResp
-	5, // 5: pb.usercenter.GetUserInfo:output_type -> pb.GetUserInfoResp
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: pb.GetUserInfoResp.user:type_name -> pb.User
+	3, // 1: pb.usercenter.login:input_type -> pb.LoginReq
+	1, // 2: pb.usercenter.register:input_type -> pb.RegisterReq
+	5, // 3: pb.usercenter.getUserInfo:input_type -> pb.GetUserInfoReq
+	7, // 4: pb.usercenter.generateToken:input_type -> pb.GenerateTokenReq
+	4, // 5: pb.usercenter.login:output_type -> pb.LoginResp
+	2, // 6: pb.usercenter.register:output_type -> pb.RegisterResp
+	6, // 7: pb.usercenter.getUserInfo:output_type -> pb.GetUserInfoResp
+	8, // 8: pb.usercenter.generateToken:output_type -> pb.GenerateTokenResp
+	5, // [5:9] is the sub-list for method output_type
+	1, // [1:5] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_app_user_cmd_rpc_pb_usercenter_proto_init() }
@@ -429,7 +647,7 @@ func file_app_user_cmd_rpc_pb_usercenter_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_app_user_cmd_rpc_pb_usercenter_proto_rawDesc), len(file_app_user_cmd_rpc_pb_usercenter_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -20,14 +20,19 @@ type (
 	GetUserInfoResp   = pb.GetUserInfoResp
 	LoginReq          = pb.LoginReq
 	LoginResp         = pb.LoginResp
+	RegisterReq       = pb.RegisterReq
+	RegisterResp      = pb.RegisterResp
+	User              = pb.User
 
 	Usercenter interface {
-		// 生成 Token (核心鉴权逻辑)
-		GenerateToken(ctx context.Context, in *GenerateTokenReq, opts ...grpc.CallOption) (*GenerateTokenResp, error)
 		// 登录
 		Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginResp, error)
-		// 获取信息
+		// 注册
+		Register(ctx context.Context, in *RegisterReq, opts ...grpc.CallOption) (*RegisterResp, error)
+		// 获取用户信息
 		GetUserInfo(ctx context.Context, in *GetUserInfoReq, opts ...grpc.CallOption) (*GetUserInfoResp, error)
+		// 生成 Token (供内部逻辑调用)
+		GenerateToken(ctx context.Context, in *GenerateTokenReq, opts ...grpc.CallOption) (*GenerateTokenResp, error)
 	}
 
 	defaultUsercenter struct {
@@ -41,20 +46,26 @@ func NewUsercenter(cli zrpc.Client) Usercenter {
 	}
 }
 
-// 生成 Token (核心鉴权逻辑)
-func (m *defaultUsercenter) GenerateToken(ctx context.Context, in *GenerateTokenReq, opts ...grpc.CallOption) (*GenerateTokenResp, error) {
-	client := pb.NewUsercenterClient(m.cli.Conn())
-	return client.GenerateToken(ctx, in, opts...)
-}
-
 // 登录
 func (m *defaultUsercenter) Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginResp, error) {
 	client := pb.NewUsercenterClient(m.cli.Conn())
 	return client.Login(ctx, in, opts...)
 }
 
-// 获取信息
+// 注册
+func (m *defaultUsercenter) Register(ctx context.Context, in *RegisterReq, opts ...grpc.CallOption) (*RegisterResp, error) {
+	client := pb.NewUsercenterClient(m.cli.Conn())
+	return client.Register(ctx, in, opts...)
+}
+
+// 获取用户信息
 func (m *defaultUsercenter) GetUserInfo(ctx context.Context, in *GetUserInfoReq, opts ...grpc.CallOption) (*GetUserInfoResp, error) {
 	client := pb.NewUsercenterClient(m.cli.Conn())
 	return client.GetUserInfo(ctx, in, opts...)
+}
+
+// 生成 Token (供内部逻辑调用)
+func (m *defaultUsercenter) GenerateToken(ctx context.Context, in *GenerateTokenReq, opts ...grpc.CallOption) (*GenerateTokenResp, error) {
+	client := pb.NewUsercenterClient(m.cli.Conn())
+	return client.GenerateToken(ctx, in, opts...)
 }
