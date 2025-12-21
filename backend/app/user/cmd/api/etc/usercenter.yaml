@@ -1,6 +1,6 @@
 Name: usercenter
 Host: 0.0.0.0
-Port: 8888
+Port: 1004
 
 #jwtAuth
 JwtAuth:
@@ -16,7 +16,8 @@ Prometheus:
 #链路追踪
 Telemetry:
   Name: usercenter-api
-  Endpoint: http://jaeger:14268/api/traces
+  # Endpoint: http://jaeger:14268/api/traces
+  Endpoint: http://localhost:14268/api/traces
   Sampler: 1.0
   Batcher: jaeger
 
