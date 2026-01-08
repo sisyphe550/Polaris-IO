@@ -1,0 +1,85 @@
+global:
+  scrape_interval: 15s # 默认抓取频率
+  external_labels:
+    monitor: 'polaris-monitor'
+
+scrape_configs:
+  # 1. 监控 Prometheus 自身
+  - job_name: 'prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # 2. 监控你的 Go-zero 服务
+  # 2.1 用户服务
+  - job_name: 'user-api'
+    # scrape_interval: 5s
+    static_configs:
+      - targets: ['polaris-io:4001']
+        labels:
+          job: user-api
+          app: user-api
+          env: dev
+  - job_name: 'user-rpc'
+    static_configs:
+      - targets: ['polaris-io:4002']
+        labels:
+          job: user-rpc
+          app: user-rpc
+          env: dev
+  - job_name: 'file-api'
+    static_configs:
+      - targets: ['polaris-io:4003']
+        labels:
+          job: file-api
+          app: file-api
+          env: dev
+  - job_name: 'file-rpc'
+    static_configs:
+      - targets: ['polaris-io:4004']
+        labels:
+          job: file-rpc
+          app: file-rpc
+          env: dev
+  - job_name: 'share-api'
+    static_configs:
+      - targets: ['polaris-io:4005']
+        labels:
+          job: share-api
+          app: share-api
+          env: dev
+  - job_name: 'share-rpc'
+    static_configs:
+      - targets: ['polaris-io:4006']
+        labels:
+          job: share-rpc
+          app: share-rpc
+          env: dev
+  - job_name: 'search-api'
+    static_configs:
+      - targets: ['polaris-io:4007']
+        labels:
+          job: search-api
+          app: search-api
+          env: dev
+  - job_name: 'search-rpc'
+    static_configs:
+      - targets: ['polaris-io:4008']
+        labels:
+          job: search-rpc
+          app: search-rpc
+          env: dev
+  - job_name: 'mqueue-job'
+    static_configs:
+      - targets: ['polaris-io:4009']
+        labels:
+          job: mqueue-job
+          app: mqueue-job
+          env: dev
+  - job_name: 'mqueue-scheduler'
+    static_configs:
+      - targets: ['polaris-io:4010']
+        labels:
+          job: mqueue-scheduler
+          app: mqueue-scheduler
+          env: dev

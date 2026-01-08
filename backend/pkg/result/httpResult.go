@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"shared-board/backend/pkg/xerr"
+	"polaris-io/backend/pkg/xerr"
 
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/logx"

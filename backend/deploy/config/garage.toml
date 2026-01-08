@@ -1,20 +1,40 @@
+# ==========================================
+# Polaris-IO Garage (S3) 配置文件
+# 适配版本: Garage v1.0+
+# ==========================================
+
+# 1. 核心目录配置
 metadata_dir = "/var/lib/garage/meta"
 data_dir = "/var/lib/garage/data"
+
+# 2. 数据库引擎
 db_engine = "sqlite"
 
-# 1. 这里的配置必须放在最顶层，不能放在 [rpc] 下
+# 3. 复制因子 (修复 legacy replication_mode 错误)
+# 旧版写法: replication_mode = "none" (已废弃)
+# 新版写法: 
 replication_factor = 1
-rpc_bind_addr = "[::]:3901"
-rpc_public_addr = "127.0.0.1:3901"
-# 必须提供一个 secret，用于节点间通信安全（这里是一个随机生成的示例）
-rpc_secret = "2e3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a"
 
+# 4. RPC 通信配置
+rpc_bind_addr = "[::]:3901"
+rpc_secret = "5a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b"
+
+# 5. S3 API 配置
 [s3_api]
 s3_region = "us-east-1"
 api_bind_addr = "[::]:3900"
 root_domain = ".s3.localhost"
 
+# 6. S3 Web 配置
+# 移到 3903 避免与 Admin 冲突
 [s3_web]
-bind_addr = "[::]:3902"
+bind_addr = "[::]:3903"
 root_domain = ".web.localhost"
 index = "index.html"
+
+# 7. 管理 API 配置
+# 必须确保这里没有重复的 api_bind_addr
+[admin]
+api_bind_addr = "[::]:3902"
+# metrics_token = "..." # 可选
+# admin_token 由环境变量 GARAGE_ADMIN_TOKEN 控制

@@ -29,10 +29,15 @@ func NewLoginLogic(ctx context.Context, svcCtx *svc.ServiceContext) *LoginLogic 
 func (l *LoginLogic) Login(req *types.LoginReq) (resp *types.LoginResp, err error) {
 	// todo: add your logic here and delete this line
 
+	authType := req.AuthType
+	if authType == "" {
+		authType = "mobile"
+	}
+
 	// 1. 调用 RPC 登录接口
 	loginResp, err := l.svcCtx.UsercenterRpc.Login(l.ctx, &usercenter.LoginReq{
-		AuthType: "mobile",   // 目前仅支持手机号登录
-		AuthKey:  req.Mobile, // 手机号作为唯一标识
+		AuthType: authType,
+		AuthKey:  req.AuthKey,
 		Password: req.Password,
 	})
 	if err != nil {

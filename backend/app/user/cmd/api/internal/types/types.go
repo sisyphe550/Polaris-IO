@@ -4,8 +4,9 @@
 package types
 
 type LoginReq struct {
-	Mobile   string `json:"mobile"`
-	Password string `json:"password"`
+	AuthType string `json:"authType"` // mobile/wx（当前逻辑默认 mobile）
+	AuthKey  string `json:"authKey"`  // 手机号/OpenId
+	Password string `json:"password"` // 仅 mobile 类型需要
 }
 
 type LoginResp struct {
@@ -17,6 +18,9 @@ type LoginResp struct {
 type RegisterReq struct {
 	Mobile   string `json:"mobile"`
 	Password string `json:"password"`
+	Nickname string `json:"nickname"` // 可选
+	AuthKey  string `json:"authKey"`  // 可选：默认使用 mobile
+	AuthType string `json:"authType"` // 可选：默认 "mobile"
 }
 
 type RegisterResp struct {
@@ -25,15 +29,19 @@ type RegisterResp struct {
 	RefreshAfter int64  `json:"refreshAfter"`
 }
 
-type UserInfoReq struct {
-}
-
-type UserInfoResp struct {
+type User struct {
 	Id       int64  `json:"id"`
 	Mobile   string `json:"mobile"`
 	Nickname string `json:"nickname"`
 	Avatar   string `json:"avatar"`
 	Info     string `json:"info"`
+}
+
+type UserInfoReq struct {
+}
+
+type UserInfoResp struct {
+	User User `json:"user"`
 }
 
 type WxMiniAuthReq struct {

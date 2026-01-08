@@ -1,0 +1,25 @@
+filebeat.inputs: # 数据源
+  - type: log
+    enabled: true
+    paths:
+      - /var/lib/docker/containers/*/*-json.log
+
+filebeat.config: # 配置模块
+  modules:
+    path: ${path.config}/modules.d/*.yml
+    reload.enabled: false
+    
+processors: # 处理器
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+
+output.kafka: # 输出端
+  enabled: true
+  hosts: ["kafka:9092"]
+  # 要提前创建topic
+  topic: "polaris-log"
+  partition.hash: # 性能与可靠性调优
+    reachable_only: true
+  compression: gzip
+  max_message_bytes: 1000000
+  required_acks: 1

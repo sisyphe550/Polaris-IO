@@ -29,13 +29,23 @@ func NewRegisterLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Register
 func (l *RegisterLogic) Register(req *types.RegisterReq) (resp *types.RegisterResp, err error) {
 	// todo: add your logic here and delete this line
 
+	authType := req.AuthType
+	if authType == "" {
+		authType = "mobile"
+	}
+	authKey := req.AuthKey
+	if authKey == "" {
+		authKey = req.Mobile
+	}
+
 	// 1. 调用 RPC 服务的 Register 接口
 	// 这里将 API 的请求参数转换为 RPC 需要的请求参数
 	registerResp, err := l.svcCtx.UsercenterRpc.Register(l.ctx, &usercenter.RegisterReq{
 		Mobile:   req.Mobile,
 		Password: req.Password,
-		AuthKey:  req.Mobile, // 默认使用手机号作为 AuthKey
-		AuthType: "mobile",   // 认证类型标记为手机
+		Nickname: req.Nickname,
+		AuthKey:  authKey,
+		AuthType: authType,
 	})
 	if err != nil {
 		return nil, err

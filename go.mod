@@ -1,9 +1,10 @@
-module shared-board
+module polaris-io
 
 go 1.25.4
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
+	github.com/jinzhu/copier v0.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/zeromicro/go-zero v1.9.3
 	google.golang.org/grpc v1.65.0

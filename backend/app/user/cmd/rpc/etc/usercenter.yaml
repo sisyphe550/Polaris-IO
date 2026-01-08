@@ -1,20 +1,29 @@
 Name: usercenter.rpc
 ListenOn: 0.0.0.0:2004
+Mode: dev
 
-Etcd:
-  Hosts:
-  - 127.0.0.1:2379
-  Key: usercenter.rpc
+# Etcd:
+#   Hosts:
+#   - 127.0.0.1:2379
+#   Key: usercenter.rpc
 
 #jwtAuth
 JwtAuth:
   AccessSecret: ae0536f9-6450-4606-8e13-5a19ed505da0
   AccessExpire: 31536000
 
+# DB
+# 注意：
+# - 你当前是本机运行 rpc（go run），MySQL 通过 docker 端口映射到 127.0.0.1:3306
+# - docker-compose-env.yml 里 root 密码是 root
+# - 数据库名建议用 whiteboard（如果你已创建别的库，改成你的库名即可）
+DB:
+  DataSource: root:root@tcp(127.0.0.1:3306)/whiteboard?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+
 #Monitoring
 Prometheus:
   Host: 0.0.0.0
-  Port: 4009
+  Port: 4002
   Path: /metrics
 
 #Link Tracking
@@ -28,14 +37,14 @@ Log:
   ServiceName: usercenter-rpc
   Level: error
 
-# Redis:
-#   Host: redis:6379
-#   Type: node
-#   Pass: G62m50oigInC30sf
-#   Key: usercenter-rpc
-# DB:
-#   DataSource: root:PXDN93VRKUm8TeE7@tcp(mysql:3306)/looklook_usercenter?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
-# Cache:
-#   - Host: redis:6379
-#     Pass: G62m50oigInC30sf
+Redis:
+  Host: redis:6379
+  Type: node
+  Pass: polaris
+  Key: usercenter-rpc
+DB:
+  DataSource: root:root@tcp(mysql:3306)/polaris_usercenter?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+Cache:
+  - Host: redis:6379
+    Pass: polaris
 

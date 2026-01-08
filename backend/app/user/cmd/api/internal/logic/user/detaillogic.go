@@ -43,10 +43,9 @@ func (l *DetailLogic) Detail(req *types.UserInfoReq) (resp *types.UserInfoResp, 
 	}
 
 	// 3. 组装数据返回
-	// 注意：根据你的 user.api 定义，UserInfoResp 是扁平结构
 	var res types.UserInfoResp
 	if userInfoResp.User != nil {
-		_ = copier.Copy(&res, userInfoResp.User)
+		_ = copier.Copy(&res.User, userInfoResp.User)
 	}
 
 	return &res, nil
