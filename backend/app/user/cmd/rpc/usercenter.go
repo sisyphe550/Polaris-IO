@@ -4,11 +4,11 @@ import (
 	"flag"
 	"fmt"
 
-	"shared-board/backend/app/user/cmd/rpc/internal/config"
-	"shared-board/backend/app/user/cmd/rpc/internal/server"
-	"shared-board/backend/app/user/cmd/rpc/internal/svc"
-	"shared-board/backend/app/user/cmd/rpc/pb"
-	"shared-board/backend/pkg/interceptor/rpcserver"
+	"polaris-io/backend/app/user/cmd/rpc/internal/config"
+	"polaris-io/backend/app/user/cmd/rpc/internal/server"
+	"polaris-io/backend/app/user/cmd/rpc/internal/svc"
+	"polaris-io/backend/app/user/cmd/rpc/pb"
+	"polaris-io/backend/pkg/interceptor/rpcserver"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"

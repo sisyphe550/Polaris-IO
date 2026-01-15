@@ -1,65 +1,82 @@
 syntax = "v1"
 
 info (
-	title:   "用户中心服务"
-	desc:    "负责用户注册、登录、信息管理"
-	author:  "YourName"
-	email:   "your_email@example.com"
+	title:   "用户模块类型定义"
+	desc:    "用户相关的请求/响应类型"
+	author:  "Polaris-IO"
 	version: "v1"
 )
 
-type (
-	// 用户基础信息（与 usercenter.proto: User 对齐）
-	User {
-		Id       int64  `json:"id"`
-		Mobile   string `json:"mobile"`
-		Nickname string `json:"nickname"`
-		Avatar   string `json:"avatar"`
-		Info     string `json:"info"`
-	}
+// =====================================
+// 数据模型 (Data Models)
+// =====================================
 
-	// 注册请求
+// 用户基本信息
+type User {
+	Id     int64  `json:"id"`
+	Mobile string `json:"mobile"`
+	Name   string `json:"name"`
+	Avatar string `json:"avatar"`
+	Info   string `json:"info"`
+}
+
+// 用户配额信息
+type UserQuota {
+	TotalSize uint64 `json:"totalSize"` // 总容量 (字节)
+	UsedSize  uint64 `json:"usedSize"`  // 已用容量 (字节)
+}
+
+// =====================================
+// 注册
+// =====================================
+type (
 	RegisterReq {
-		Mobile   string `json:"mobile"`
-		Password string `json:"password"`
-		Nickname string `json:"nickname"` // 可选
-		AuthKey  string `json:"authKey"`  // 可选：默认使用 mobile
-		AuthType string `json:"authType"` // 可选：默认 "mobile"
+		Mobile   string `json:"mobile" validate:"required,len=11"`   // 手机号
+		Password string `json:"password" validate:"required,min=6"` // 密码
+		Name     string `json:"name,optional"`                       // 昵称 (可选)
 	}
 	RegisterResp {
 		AccessToken  string `json:"accessToken"`
 		AccessExpire int64  `json:"accessExpire"`
 		RefreshAfter int64  `json:"refreshAfter"`
 	}
+)
 
-	// 登录请求
+// =====================================
+// 登录
+// =====================================
+type (
 	LoginReq {
-		AuthType string `json:"authType"` // mobile/wx（当前逻辑默认 mobile）
-		AuthKey  string `json:"authKey"`  // 手机号/OpenId
-		Password string `json:"password"` // 仅 mobile 类型需要
+		Mobile   string `json:"mobile" validate:"required"`
+		Password string `json:"password" validate:"required"`
 	}
 	LoginResp {
 		AccessToken  string `json:"accessToken"`
 		AccessExpire int64  `json:"accessExpire"`
 		RefreshAfter int64  `json:"refreshAfter"`
 	}
+)
 
-	// 微信小程序登录（可选，参考Looklook）
-	WxMiniAuthReq {
-		Code          string `json:"code"`
-		IV            string `json:"iv"`
-		EncryptedData string `json:"encryptedData"`
-	}
-	WxMiniAuthResp {
-		AccessToken  string `json:"accessToken"`
-		AccessExpire int64  `json:"accessExpire"`
-		RefreshAfter int64  `json:"refreshAfter"`
-	}
-
-	// 用户详情
+// =====================================
+// 用户信息
+// =====================================
+type (
+	// 获取当前登录用户信息 (无需传参，从 JWT 中获取 userId)
 	UserInfoReq {
 	}
 	UserInfoResp {
 		User User `json:"user"`
+	}
+)
+
+// =====================================
+// 用户配额
+// =====================================
+type (
+	// 获取当前登录用户配额 (无需传参，从 JWT 中获取 userId)
+	UserQuotaReq {
+	}
+	UserQuotaResp {
+		Quota UserQuota `json:"quota"`
 	}
 )

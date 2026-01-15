@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.1
-// source: app/user/cmd/rpc/pb/usercenter.proto
+// source: pb/usercenter.proto
 
 package pb
 
@@ -21,11 +21,12 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// 用户基本信息
 type User struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Mobile        string                 `protobuf:"bytes,2,opt,name=mobile,proto3" json:"mobile,omitempty"`
-	Nickname      string                 `protobuf:"bytes,3,opt,name=nickname,proto3" json:"nickname,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	Avatar        string                 `protobuf:"bytes,4,opt,name=avatar,proto3" json:"avatar,omitempty"`
 	Info          string                 `protobuf:"bytes,5,opt,name=info,proto3" json:"info,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -34,7 +35,7 @@ type User struct {
 
 func (x *User) Reset() {
 	*x = User{}
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[0]
+	mi := &file_pb_usercenter_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -46,7 +47,7 @@ func (x *User) String() string {
 func (*User) ProtoMessage() {}
 
 func (x *User) ProtoReflect() protoreflect.Message {
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[0]
+	mi := &file_pb_usercenter_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,7 +60,7 @@ func (x *User) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use User.ProtoReflect.Descriptor instead.
 func (*User) Descriptor() ([]byte, []int) {
-	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{0}
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *User) GetId() int64 {
@@ -76,9 +77,9 @@ func (x *User) GetMobile() string {
 	return ""
 }
 
-func (x *User) GetNickname() string {
+func (x *User) GetName() string {
 	if x != nil {
-		return x.Nickname
+		return x.Name
 	}
 	return ""
 }
@@ -97,21 +98,80 @@ func (x *User) GetInfo() string {
 	return ""
 }
 
-// 1. 注册请求
+// 用户配额信息
+type UserQuota struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	TotalSize     uint64                 `protobuf:"varint,2,opt,name=totalSize,proto3" json:"totalSize,omitempty"` // 总容量 (字节)
+	UsedSize      uint64                 `protobuf:"varint,3,opt,name=usedSize,proto3" json:"usedSize,omitempty"`   // 已用容量 (字节)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserQuota) Reset() {
+	*x = UserQuota{}
+	mi := &file_pb_usercenter_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserQuota) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserQuota) ProtoMessage() {}
+
+func (x *UserQuota) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_usercenter_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserQuota.ProtoReflect.Descriptor instead.
+func (*UserQuota) Descriptor() ([]byte, []int) {
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *UserQuota) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *UserQuota) GetTotalSize() uint64 {
+	if x != nil {
+		return x.TotalSize
+	}
+	return 0
+}
+
+func (x *UserQuota) GetUsedSize() uint64 {
+	if x != nil {
+		return x.UsedSize
+	}
+	return 0
+}
+
+// --- 注册 ---
 type RegisterReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Mobile        string                 `protobuf:"bytes,1,opt,name=mobile,proto3" json:"mobile,omitempty"`
-	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	Nickname      string                 `protobuf:"bytes,3,opt,name=nickname,proto3" json:"nickname,omitempty"` // 可选，默认为手机号或随机生成
-	AuthKey       string                 `protobuf:"bytes,4,opt,name=authKey,proto3" json:"authKey,omitempty"`   // 认证标识 (手机号/OpenId)
-	AuthType      string                 `protobuf:"bytes,5,opt,name=authType,proto3" json:"authType,omitempty"` // 认证类型 (mobile/wx)
+	Mobile        string                 `protobuf:"bytes,1,opt,name=mobile,proto3" json:"mobile,omitempty"`     // 手机号 (必填)
+	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"` // 密码 (必填)
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`         // 昵称 (可选，默认随机生成)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RegisterReq) Reset() {
 	*x = RegisterReq{}
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[1]
+	mi := &file_pb_usercenter_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -123,7 +183,7 @@ func (x *RegisterReq) String() string {
 func (*RegisterReq) ProtoMessage() {}
 
 func (x *RegisterReq) ProtoReflect() protoreflect.Message {
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[1]
+	mi := &file_pb_usercenter_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -136,7 +196,7 @@ func (x *RegisterReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterReq.ProtoReflect.Descriptor instead.
 func (*RegisterReq) Descriptor() ([]byte, []int) {
-	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{1}
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *RegisterReq) GetMobile() string {
@@ -153,23 +213,9 @@ func (x *RegisterReq) GetPassword() string {
 	return ""
 }
 
-func (x *RegisterReq) GetNickname() string {
+func (x *RegisterReq) GetName() string {
 	if x != nil {
-		return x.Nickname
-	}
-	return ""
-}
-
-func (x *RegisterReq) GetAuthKey() string {
-	if x != nil {
-		return x.AuthKey
-	}
-	return ""
-}
-
-func (x *RegisterReq) GetAuthType() string {
-	if x != nil {
-		return x.AuthType
+		return x.Name
 	}
 	return ""
 }
@@ -185,7 +231,7 @@ type RegisterResp struct {
 
 func (x *RegisterResp) Reset() {
 	*x = RegisterResp{}
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[2]
+	mi := &file_pb_usercenter_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -197,7 +243,7 @@ func (x *RegisterResp) String() string {
 func (*RegisterResp) ProtoMessage() {}
 
 func (x *RegisterResp) ProtoReflect() protoreflect.Message {
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[2]
+	mi := &file_pb_usercenter_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -210,7 +256,7 @@ func (x *RegisterResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterResp.ProtoReflect.Descriptor instead.
 func (*RegisterResp) Descriptor() ([]byte, []int) {
-	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{2}
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *RegisterResp) GetAccessToken() string {
@@ -234,19 +280,18 @@ func (x *RegisterResp) GetRefreshAfter() int64 {
 	return 0
 }
 
-// 2. 登录请求
+// --- 登录 ---
 type LoginReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AuthType      string                 `protobuf:"bytes,1,opt,name=authType,proto3" json:"authType,omitempty"` // mobile/wx
-	AuthKey       string                 `protobuf:"bytes,2,opt,name=authKey,proto3" json:"authKey,omitempty"`   // 手机号/OpenId
-	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"` // 仅 mobile 类型需要
+	Mobile        string                 `protobuf:"bytes,1,opt,name=mobile,proto3" json:"mobile,omitempty"`     // 手机号
+	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"` // 密码
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *LoginReq) Reset() {
 	*x = LoginReq{}
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[3]
+	mi := &file_pb_usercenter_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -258,7 +303,7 @@ func (x *LoginReq) String() string {
 func (*LoginReq) ProtoMessage() {}
 
 func (x *LoginReq) ProtoReflect() protoreflect.Message {
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[3]
+	mi := &file_pb_usercenter_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -271,19 +316,12 @@ func (x *LoginReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginReq.ProtoReflect.Descriptor instead.
 func (*LoginReq) Descriptor() ([]byte, []int) {
-	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{3}
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *LoginReq) GetAuthType() string {
+func (x *LoginReq) GetMobile() string {
 	if x != nil {
-		return x.AuthType
-	}
-	return ""
-}
-
-func (x *LoginReq) GetAuthKey() string {
-	if x != nil {
-		return x.AuthKey
+		return x.Mobile
 	}
 	return ""
 }
@@ -306,7 +344,7 @@ type LoginResp struct {
 
 func (x *LoginResp) Reset() {
 	*x = LoginResp{}
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[4]
+	mi := &file_pb_usercenter_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -318,7 +356,7 @@ func (x *LoginResp) String() string {
 func (*LoginResp) ProtoMessage() {}
 
 func (x *LoginResp) ProtoReflect() protoreflect.Message {
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[4]
+	mi := &file_pb_usercenter_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -331,7 +369,7 @@ func (x *LoginResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginResp.ProtoReflect.Descriptor instead.
 func (*LoginResp) Descriptor() ([]byte, []int) {
-	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{4}
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *LoginResp) GetAccessToken() string {
@@ -355,7 +393,7 @@ func (x *LoginResp) GetRefreshAfter() int64 {
 	return 0
 }
 
-// 3. 获取用户信息
+// --- 获取用户信息 ---
 type GetUserInfoReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
@@ -365,7 +403,7 @@ type GetUserInfoReq struct {
 
 func (x *GetUserInfoReq) Reset() {
 	*x = GetUserInfoReq{}
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[5]
+	mi := &file_pb_usercenter_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -377,7 +415,7 @@ func (x *GetUserInfoReq) String() string {
 func (*GetUserInfoReq) ProtoMessage() {}
 
 func (x *GetUserInfoReq) ProtoReflect() protoreflect.Message {
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[5]
+	mi := &file_pb_usercenter_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -390,7 +428,7 @@ func (x *GetUserInfoReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserInfoReq.ProtoReflect.Descriptor instead.
 func (*GetUserInfoReq) Descriptor() ([]byte, []int) {
-	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{5}
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetUserInfoReq) GetUserId() int64 {
@@ -409,7 +447,7 @@ type GetUserInfoResp struct {
 
 func (x *GetUserInfoResp) Reset() {
 	*x = GetUserInfoResp{}
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[6]
+	mi := &file_pb_usercenter_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -421,7 +459,7 @@ func (x *GetUserInfoResp) String() string {
 func (*GetUserInfoResp) ProtoMessage() {}
 
 func (x *GetUserInfoResp) ProtoReflect() protoreflect.Message {
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[6]
+	mi := &file_pb_usercenter_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -434,7 +472,7 @@ func (x *GetUserInfoResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserInfoResp.ProtoReflect.Descriptor instead.
 func (*GetUserInfoResp) Descriptor() ([]byte, []int) {
-	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{6}
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetUserInfoResp) GetUser() *User {
@@ -444,7 +482,387 @@ func (x *GetUserInfoResp) GetUser() *User {
 	return nil
 }
 
-// 4. 生成 Token (内部通用方法)
+// --- 获取用户配额 ---
+type GetUserQuotaReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserQuotaReq) Reset() {
+	*x = GetUserQuotaReq{}
+	mi := &file_pb_usercenter_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserQuotaReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserQuotaReq) ProtoMessage() {}
+
+func (x *GetUserQuotaReq) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_usercenter_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserQuotaReq.ProtoReflect.Descriptor instead.
+func (*GetUserQuotaReq) Descriptor() ([]byte, []int) {
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *GetUserQuotaReq) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type GetUserQuotaResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Quota         *UserQuota             `protobuf:"bytes,1,opt,name=quota,proto3" json:"quota,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserQuotaResp) Reset() {
+	*x = GetUserQuotaResp{}
+	mi := &file_pb_usercenter_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserQuotaResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserQuotaResp) ProtoMessage() {}
+
+func (x *GetUserQuotaResp) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_usercenter_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserQuotaResp.ProtoReflect.Descriptor instead.
+func (*GetUserQuotaResp) Descriptor() ([]byte, []int) {
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GetUserQuotaResp) GetQuota() *UserQuota {
+	if x != nil {
+		return x.Quota
+	}
+	return nil
+}
+
+// --- 更新用户配额 (File 服务调用) ---
+type UpdateUserQuotaReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	SizeDelta     int64                  `protobuf:"varint,2,opt,name=sizeDelta,proto3" json:"sizeDelta,omitempty"` // 增量: 正数=增加已用, 负数=减少已用
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateUserQuotaReq) Reset() {
+	*x = UpdateUserQuotaReq{}
+	mi := &file_pb_usercenter_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateUserQuotaReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateUserQuotaReq) ProtoMessage() {}
+
+func (x *UpdateUserQuotaReq) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_usercenter_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateUserQuotaReq.ProtoReflect.Descriptor instead.
+func (*UpdateUserQuotaReq) Descriptor() ([]byte, []int) {
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *UpdateUserQuotaReq) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *UpdateUserQuotaReq) GetSizeDelta() int64 {
+	if x != nil {
+		return x.SizeDelta
+	}
+	return 0
+}
+
+type UpdateUserQuotaResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateUserQuotaResp) Reset() {
+	*x = UpdateUserQuotaResp{}
+	mi := &file_pb_usercenter_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateUserQuotaResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateUserQuotaResp) ProtoMessage() {}
+
+func (x *UpdateUserQuotaResp) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_usercenter_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateUserQuotaResp.ProtoReflect.Descriptor instead.
+func (*UpdateUserQuotaResp) Descriptor() ([]byte, []int) {
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *UpdateUserQuotaResp) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+// --- 扣减配额 (上传前检查) ---
+type DeductQuotaReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	Size          uint64                 `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"` // 要扣减的大小 (字节)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeductQuotaReq) Reset() {
+	*x = DeductQuotaReq{}
+	mi := &file_pb_usercenter_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeductQuotaReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeductQuotaReq) ProtoMessage() {}
+
+func (x *DeductQuotaReq) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_usercenter_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeductQuotaReq.ProtoReflect.Descriptor instead.
+func (*DeductQuotaReq) Descriptor() ([]byte, []int) {
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *DeductQuotaReq) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *DeductQuotaReq) GetSize() uint64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+type DeductQuotaResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeductQuotaResp) Reset() {
+	*x = DeductQuotaResp{}
+	mi := &file_pb_usercenter_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeductQuotaResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeductQuotaResp) ProtoMessage() {}
+
+func (x *DeductQuotaResp) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_usercenter_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeductQuotaResp.ProtoReflect.Descriptor instead.
+func (*DeductQuotaResp) Descriptor() ([]byte, []int) {
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *DeductQuotaResp) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+// --- 退还配额 (删除文件时) ---
+type RefundQuotaReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	Size          uint64                 `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"` // 要退还的大小 (字节)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RefundQuotaReq) Reset() {
+	*x = RefundQuotaReq{}
+	mi := &file_pb_usercenter_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RefundQuotaReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefundQuotaReq) ProtoMessage() {}
+
+func (x *RefundQuotaReq) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_usercenter_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefundQuotaReq.ProtoReflect.Descriptor instead.
+func (*RefundQuotaReq) Descriptor() ([]byte, []int) {
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *RefundQuotaReq) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *RefundQuotaReq) GetSize() uint64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+type RefundQuotaResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RefundQuotaResp) Reset() {
+	*x = RefundQuotaResp{}
+	mi := &file_pb_usercenter_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RefundQuotaResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefundQuotaResp) ProtoMessage() {}
+
+func (x *RefundQuotaResp) ProtoReflect() protoreflect.Message {
+	mi := &file_pb_usercenter_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefundQuotaResp.ProtoReflect.Descriptor instead.
+func (*RefundQuotaResp) Descriptor() ([]byte, []int) {
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *RefundQuotaResp) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+// --- 生成 Token (内部方法) ---
 type GenerateTokenReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int64                  `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
@@ -454,7 +872,7 @@ type GenerateTokenReq struct {
 
 func (x *GenerateTokenReq) Reset() {
 	*x = GenerateTokenReq{}
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[7]
+	mi := &file_pb_usercenter_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -466,7 +884,7 @@ func (x *GenerateTokenReq) String() string {
 func (*GenerateTokenReq) ProtoMessage() {}
 
 func (x *GenerateTokenReq) ProtoReflect() protoreflect.Message {
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[7]
+	mi := &file_pb_usercenter_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -479,7 +897,7 @@ func (x *GenerateTokenReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerateTokenReq.ProtoReflect.Descriptor instead.
 func (*GenerateTokenReq) Descriptor() ([]byte, []int) {
-	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{7}
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GenerateTokenReq) GetUserId() int64 {
@@ -500,7 +918,7 @@ type GenerateTokenResp struct {
 
 func (x *GenerateTokenResp) Reset() {
 	*x = GenerateTokenResp{}
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[8]
+	mi := &file_pb_usercenter_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -512,7 +930,7 @@ func (x *GenerateTokenResp) String() string {
 func (*GenerateTokenResp) ProtoMessage() {}
 
 func (x *GenerateTokenResp) ProtoReflect() protoreflect.Message {
-	mi := &file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes[8]
+	mi := &file_pb_usercenter_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -525,7 +943,7 @@ func (x *GenerateTokenResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerateTokenResp.ProtoReflect.Descriptor instead.
 func (*GenerateTokenResp) Descriptor() ([]byte, []int) {
-	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP(), []int{8}
+	return file_pb_usercenter_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GenerateTokenResp) GetAccessToken() string {
@@ -549,31 +967,32 @@ func (x *GenerateTokenResp) GetRefreshAfter() int64 {
 	return 0
 }
 
-var File_app_user_cmd_rpc_pb_usercenter_proto protoreflect.FileDescriptor
+var File_pb_usercenter_proto protoreflect.FileDescriptor
 
-const file_app_user_cmd_rpc_pb_usercenter_proto_rawDesc = "" +
+const file_pb_usercenter_proto_rawDesc = "" +
 	"\n" +
-	"$app/user/cmd/rpc/pb/usercenter.proto\x12\x02pb\"v\n" +
+	"\x13pb/usercenter.proto\x12\x02pb\"n\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
-	"\x06mobile\x18\x02 \x01(\tR\x06mobile\x12\x1a\n" +
-	"\bnickname\x18\x03 \x01(\tR\bnickname\x12\x16\n" +
+	"\x06mobile\x18\x02 \x01(\tR\x06mobile\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x16\n" +
 	"\x06avatar\x18\x04 \x01(\tR\x06avatar\x12\x12\n" +
-	"\x04info\x18\x05 \x01(\tR\x04info\"\x93\x01\n" +
+	"\x04info\x18\x05 \x01(\tR\x04info\"]\n" +
+	"\tUserQuota\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\x03R\x06userId\x12\x1c\n" +
+	"\ttotalSize\x18\x02 \x01(\x04R\ttotalSize\x12\x1a\n" +
+	"\busedSize\x18\x03 \x01(\x04R\busedSize\"U\n" +
 	"\vRegisterReq\x12\x16\n" +
 	"\x06mobile\x18\x01 \x01(\tR\x06mobile\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x1a\n" +
-	"\bnickname\x18\x03 \x01(\tR\bnickname\x12\x18\n" +
-	"\aauthKey\x18\x04 \x01(\tR\aauthKey\x12\x1a\n" +
-	"\bauthType\x18\x05 \x01(\tR\bauthType\"x\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\"x\n" +
 	"\fRegisterResp\x12 \n" +
 	"\vaccessToken\x18\x01 \x01(\tR\vaccessToken\x12\"\n" +
 	"\faccessExpire\x18\x02 \x01(\x03R\faccessExpire\x12\"\n" +
-	"\frefreshAfter\x18\x03 \x01(\x03R\frefreshAfter\"\\\n" +
-	"\bLoginReq\x12\x1a\n" +
-	"\bauthType\x18\x01 \x01(\tR\bauthType\x12\x18\n" +
-	"\aauthKey\x18\x02 \x01(\tR\aauthKey\x12\x1a\n" +
-	"\bpassword\x18\x03 \x01(\tR\bpassword\"u\n" +
+	"\frefreshAfter\x18\x03 \x01(\x03R\frefreshAfter\">\n" +
+	"\bLoginReq\x12\x16\n" +
+	"\x06mobile\x18\x01 \x01(\tR\x06mobile\x12\x1a\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\"u\n" +
 	"\tLoginResp\x12 \n" +
 	"\vaccessToken\x18\x01 \x01(\tR\vaccessToken\x12\"\n" +
 	"\faccessExpire\x18\x02 \x01(\x03R\faccessExpire\x12\"\n" +
@@ -581,81 +1000,119 @@ const file_app_user_cmd_rpc_pb_usercenter_proto_rawDesc = "" +
 	"\x0eGetUserInfoReq\x12\x16\n" +
 	"\x06userId\x18\x01 \x01(\x03R\x06userId\"/\n" +
 	"\x0fGetUserInfoResp\x12\x1c\n" +
-	"\x04user\x18\x01 \x01(\v2\b.pb.UserR\x04user\"*\n" +
+	"\x04user\x18\x01 \x01(\v2\b.pb.UserR\x04user\")\n" +
+	"\x0fGetUserQuotaReq\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\x03R\x06userId\"7\n" +
+	"\x10GetUserQuotaResp\x12#\n" +
+	"\x05quota\x18\x01 \x01(\v2\r.pb.UserQuotaR\x05quota\"J\n" +
+	"\x12UpdateUserQuotaReq\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\x03R\x06userId\x12\x1c\n" +
+	"\tsizeDelta\x18\x02 \x01(\x03R\tsizeDelta\"/\n" +
+	"\x13UpdateUserQuotaResp\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"<\n" +
+	"\x0eDeductQuotaReq\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\x03R\x06userId\x12\x12\n" +
+	"\x04size\x18\x02 \x01(\x04R\x04size\"+\n" +
+	"\x0fDeductQuotaResp\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"<\n" +
+	"\x0eRefundQuotaReq\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\x03R\x06userId\x12\x12\n" +
+	"\x04size\x18\x02 \x01(\x04R\x04size\"+\n" +
+	"\x0fRefundQuotaResp\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"*\n" +
 	"\x10GenerateTokenReq\x12\x16\n" +
 	"\x06userId\x18\x01 \x01(\x03R\x06userId\"}\n" +
 	"\x11GenerateTokenResp\x12 \n" +
 	"\vaccessToken\x18\x01 \x01(\tR\vaccessToken\x12\"\n" +
 	"\faccessExpire\x18\x02 \x01(\x03R\faccessExpire\x12\"\n" +
-	"\frefreshAfter\x18\x03 \x01(\x03R\frefreshAfter2\xd7\x01\n" +
+	"\frefreshAfter\x18\x03 \x01(\x03R\frefreshAfter2\x82\x03\n" +
 	"\n" +
-	"usercenter\x12$\n" +
-	"\x05login\x12\f.pb.LoginReq\x1a\r.pb.LoginResp\x12-\n" +
-	"\bregister\x12\x0f.pb.RegisterReq\x1a\x10.pb.RegisterResp\x126\n" +
-	"\vgetUserInfo\x12\x12.pb.GetUserInfoReq\x1a\x13.pb.GetUserInfoResp\x12<\n" +
-	"\rgenerateToken\x12\x14.pb.GenerateTokenReq\x1a\x15.pb.GenerateTokenRespB\x06Z\x04./pbb\x06proto3"
+	"Usercenter\x12-\n" +
+	"\bRegister\x12\x0f.pb.RegisterReq\x1a\x10.pb.RegisterResp\x12$\n" +
+	"\x05Login\x12\f.pb.LoginReq\x1a\r.pb.LoginResp\x12<\n" +
+	"\rGenerateToken\x12\x14.pb.GenerateTokenReq\x1a\x15.pb.GenerateTokenResp\x126\n" +
+	"\vGetUserInfo\x12\x12.pb.GetUserInfoReq\x1a\x13.pb.GetUserInfoResp\x129\n" +
+	"\fGetUserQuota\x12\x13.pb.GetUserQuotaReq\x1a\x14.pb.GetUserQuotaResp\x126\n" +
+	"\vDeductQuota\x12\x12.pb.DeductQuotaReq\x1a\x13.pb.DeductQuotaResp\x126\n" +
+	"\vRefundQuota\x12\x12.pb.RefundQuotaReq\x1a\x13.pb.RefundQuotaRespB\x06Z\x04./pbb\x06proto3"
 
 var (
-	file_app_user_cmd_rpc_pb_usercenter_proto_rawDescOnce sync.Once
-	file_app_user_cmd_rpc_pb_usercenter_proto_rawDescData []byte
+	file_pb_usercenter_proto_rawDescOnce sync.Once
+	file_pb_usercenter_proto_rawDescData []byte
 )
 
-func file_app_user_cmd_rpc_pb_usercenter_proto_rawDescGZIP() []byte {
-	file_app_user_cmd_rpc_pb_usercenter_proto_rawDescOnce.Do(func() {
-		file_app_user_cmd_rpc_pb_usercenter_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_app_user_cmd_rpc_pb_usercenter_proto_rawDesc), len(file_app_user_cmd_rpc_pb_usercenter_proto_rawDesc)))
+func file_pb_usercenter_proto_rawDescGZIP() []byte {
+	file_pb_usercenter_proto_rawDescOnce.Do(func() {
+		file_pb_usercenter_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_pb_usercenter_proto_rawDesc), len(file_pb_usercenter_proto_rawDesc)))
 	})
-	return file_app_user_cmd_rpc_pb_usercenter_proto_rawDescData
+	return file_pb_usercenter_proto_rawDescData
 }
 
-var file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
-var file_app_user_cmd_rpc_pb_usercenter_proto_goTypes = []any{
-	(*User)(nil),              // 0: pb.User
-	(*RegisterReq)(nil),       // 1: pb.RegisterReq
-	(*RegisterResp)(nil),      // 2: pb.RegisterResp
-	(*LoginReq)(nil),          // 3: pb.LoginReq
-	(*LoginResp)(nil),         // 4: pb.LoginResp
-	(*GetUserInfoReq)(nil),    // 5: pb.GetUserInfoReq
-	(*GetUserInfoResp)(nil),   // 6: pb.GetUserInfoResp
-	(*GenerateTokenReq)(nil),  // 7: pb.GenerateTokenReq
-	(*GenerateTokenResp)(nil), // 8: pb.GenerateTokenResp
+var file_pb_usercenter_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_pb_usercenter_proto_goTypes = []any{
+	(*User)(nil),                // 0: pb.User
+	(*UserQuota)(nil),           // 1: pb.UserQuota
+	(*RegisterReq)(nil),         // 2: pb.RegisterReq
+	(*RegisterResp)(nil),        // 3: pb.RegisterResp
+	(*LoginReq)(nil),            // 4: pb.LoginReq
+	(*LoginResp)(nil),           // 5: pb.LoginResp
+	(*GetUserInfoReq)(nil),      // 6: pb.GetUserInfoReq
+	(*GetUserInfoResp)(nil),     // 7: pb.GetUserInfoResp
+	(*GetUserQuotaReq)(nil),     // 8: pb.GetUserQuotaReq
+	(*GetUserQuotaResp)(nil),    // 9: pb.GetUserQuotaResp
+	(*UpdateUserQuotaReq)(nil),  // 10: pb.UpdateUserQuotaReq
+	(*UpdateUserQuotaResp)(nil), // 11: pb.UpdateUserQuotaResp
+	(*DeductQuotaReq)(nil),      // 12: pb.DeductQuotaReq
+	(*DeductQuotaResp)(nil),     // 13: pb.DeductQuotaResp
+	(*RefundQuotaReq)(nil),      // 14: pb.RefundQuotaReq
+	(*RefundQuotaResp)(nil),     // 15: pb.RefundQuotaResp
+	(*GenerateTokenReq)(nil),    // 16: pb.GenerateTokenReq
+	(*GenerateTokenResp)(nil),   // 17: pb.GenerateTokenResp
 }
-var file_app_user_cmd_rpc_pb_usercenter_proto_depIdxs = []int32{
-	0, // 0: pb.GetUserInfoResp.user:type_name -> pb.User
-	3, // 1: pb.usercenter.login:input_type -> pb.LoginReq
-	1, // 2: pb.usercenter.register:input_type -> pb.RegisterReq
-	5, // 3: pb.usercenter.getUserInfo:input_type -> pb.GetUserInfoReq
-	7, // 4: pb.usercenter.generateToken:input_type -> pb.GenerateTokenReq
-	4, // 5: pb.usercenter.login:output_type -> pb.LoginResp
-	2, // 6: pb.usercenter.register:output_type -> pb.RegisterResp
-	6, // 7: pb.usercenter.getUserInfo:output_type -> pb.GetUserInfoResp
-	8, // 8: pb.usercenter.generateToken:output_type -> pb.GenerateTokenResp
-	5, // [5:9] is the sub-list for method output_type
-	1, // [1:5] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+var file_pb_usercenter_proto_depIdxs = []int32{
+	0,  // 0: pb.GetUserInfoResp.user:type_name -> pb.User
+	1,  // 1: pb.GetUserQuotaResp.quota:type_name -> pb.UserQuota
+	2,  // 2: pb.Usercenter.Register:input_type -> pb.RegisterReq
+	4,  // 3: pb.Usercenter.Login:input_type -> pb.LoginReq
+	16, // 4: pb.Usercenter.GenerateToken:input_type -> pb.GenerateTokenReq
+	6,  // 5: pb.Usercenter.GetUserInfo:input_type -> pb.GetUserInfoReq
+	8,  // 6: pb.Usercenter.GetUserQuota:input_type -> pb.GetUserQuotaReq
+	12, // 7: pb.Usercenter.DeductQuota:input_type -> pb.DeductQuotaReq
+	14, // 8: pb.Usercenter.RefundQuota:input_type -> pb.RefundQuotaReq
+	3,  // 9: pb.Usercenter.Register:output_type -> pb.RegisterResp
+	5,  // 10: pb.Usercenter.Login:output_type -> pb.LoginResp
+	17, // 11: pb.Usercenter.GenerateToken:output_type -> pb.GenerateTokenResp
+	7,  // 12: pb.Usercenter.GetUserInfo:output_type -> pb.GetUserInfoResp
+	9,  // 13: pb.Usercenter.GetUserQuota:output_type -> pb.GetUserQuotaResp
+	13, // 14: pb.Usercenter.DeductQuota:output_type -> pb.DeductQuotaResp
+	15, // 15: pb.Usercenter.RefundQuota:output_type -> pb.RefundQuotaResp
+	9,  // [9:16] is the sub-list for method output_type
+	2,  // [2:9] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
-func init() { file_app_user_cmd_rpc_pb_usercenter_proto_init() }
-func file_app_user_cmd_rpc_pb_usercenter_proto_init() {
-	if File_app_user_cmd_rpc_pb_usercenter_proto != nil {
+func init() { file_pb_usercenter_proto_init() }
+func file_pb_usercenter_proto_init() {
+	if File_pb_usercenter_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_app_user_cmd_rpc_pb_usercenter_proto_rawDesc), len(file_app_user_cmd_rpc_pb_usercenter_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pb_usercenter_proto_rawDesc), len(file_pb_usercenter_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_app_user_cmd_rpc_pb_usercenter_proto_goTypes,
-		DependencyIndexes: file_app_user_cmd_rpc_pb_usercenter_proto_depIdxs,
-		MessageInfos:      file_app_user_cmd_rpc_pb_usercenter_proto_msgTypes,
+		GoTypes:           file_pb_usercenter_proto_goTypes,
+		DependencyIndexes: file_pb_usercenter_proto_depIdxs,
+		MessageInfos:      file_pb_usercenter_proto_msgTypes,
 	}.Build()
-	File_app_user_cmd_rpc_pb_usercenter_proto = out.File
-	file_app_user_cmd_rpc_pb_usercenter_proto_goTypes = nil
-	file_app_user_cmd_rpc_pb_usercenter_proto_depIdxs = nil
+	File_pb_usercenter_proto = out.File
+	file_pb_usercenter_proto_goTypes = nil
+	file_pb_usercenter_proto_depIdxs = nil
 }

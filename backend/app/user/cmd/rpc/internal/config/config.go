@@ -1,17 +1,31 @@
 package config
 
-import "github.com/zeromicro/go-zero/zrpc"
-
-type DBConf struct {
-	DataSource string
-}
+import (
+	"github.com/zeromicro/go-zero/core/stores/cache"
+	"github.com/zeromicro/go-zero/zrpc"
+)
 
 type Config struct {
 	zrpc.RpcServerConf
+
+	// JWT 配置
 	JwtAuth struct {
 		AccessSecret string
 		AccessExpire int64
 	}
-	// DB 设为可选：避免开发期不配 DB 就启动失败
-	DB *DBConf
+
+	// 数据库配置
+	DB struct {
+		DataSource string
+	}
+
+	// Redis 配置
+	Redis struct {
+		Host string
+		Type string
+		Pass string
+	}
+
+	// 缓存配置
+	Cache cache.CacheConf
 }

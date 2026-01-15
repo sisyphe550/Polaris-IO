@@ -1,50 +1,48 @@
 Name: usercenter.rpc
-ListenOn: 0.0.0.0:2004
+ListenOn: 0.0.0.0:2001
 Mode: dev
 
+# Etcd (生产环境启用):
 # Etcd:
 #   Hosts:
-#   - 127.0.0.1:2379
+#   - etcd:2379
 #   Key: usercenter.rpc
 
-#jwtAuth
+# JWT 配置
 JwtAuth:
   AccessSecret: ae0536f9-6450-4606-8e13-5a19ed505da0
-  AccessExpire: 31536000
+  AccessExpire: 604800 # 7 天
 
-# DB
-# 注意：
-# - 你当前是本机运行 rpc（go run），MySQL 通过 docker 端口映射到 127.0.0.1:3306
-# - docker-compose-env.yml 里 root 密码是 root
-# - 数据库名建议用 whiteboard（如果你已创建别的库，改成你的库名即可）
+# 数据库配置 (开发环境: 127.0.0.1, 容器环境: mysql)
 DB:
-  DataSource: root:root@tcp(127.0.0.1:3306)/whiteboard?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+  DataSource: root:root@tcp(127.0.0.1:3306)/polaris_user?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
 
-#Monitoring
+# Redis 配置 (开发环境: 127.0.0.1, 容器环境: redis)
+Redis:
+  Host: 127.0.0.1:6379
+  Type: node
+  Pass: polaris
+
+# 缓存配置 (sqlc 缓存)
+Cache:
+  - Host: 127.0.0.1:6379
+    Pass: polaris
+
+# 监控
 Prometheus:
   Host: 0.0.0.0
   Port: 4002
   Path: /metrics
 
-#Link Tracking
+# 链路追踪
 Telemetry:
   Name: usercenter-rpc
   Endpoint: http://jaeger:14268/api/traces
   Sampler: 1.0
   Batcher: jaeger
 
+# 日志
 Log:
   ServiceName: usercenter-rpc
-  Level: error
-
-Redis:
-  Host: redis:6379
-  Type: node
-  Pass: polaris
-  Key: usercenter-rpc
-DB:
-  DataSource: root:root@tcp(mysql:3306)/polaris_usercenter?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
-Cache:
-  - Host: redis:6379
-    Pass: polaris
+  Level: info
 

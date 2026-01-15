@@ -3,11 +3,12 @@ package user
 import (
 	"context"
 
-	"shared-board/backend/app/user/cmd/api/internal/svc"
-	"shared-board/backend/app/user/cmd/api/internal/types"
-	"shared-board/backend/app/user/cmd/rpc/usercenter"
+	"polaris-io/backend/app/user/cmd/api/internal/svc"
+	"polaris-io/backend/app/user/cmd/api/internal/types"
+	"polaris-io/backend/app/user/cmd/rpc/usercenter"
+	"polaris-io/backend/pkg/xerr"
 
-	"github.com/jinzhu/copier"
+	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -17,7 +18,7 @@ type RegisterLogic struct {
 	svcCtx *svc.ServiceContext
 }
 
-// 用户注册
+// NewRegisterLogic 用户注册
 func NewRegisterLogic(ctx context.Context, svcCtx *svc.ServiceContext) *RegisterLogic {
 	return &RegisterLogic{
 		Logger: logx.WithContext(ctx),
@@ -27,36 +28,24 @@ func NewRegisterLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Register
 }
 
 func (l *RegisterLogic) Register(req *types.RegisterReq) (resp *types.RegisterResp, err error) {
-	// todo: add your logic here and delete this line
-
-	authType := req.AuthType
-	if authType == "" {
-		authType = "mobile"
-	}
-	authKey := req.AuthKey
-	if authKey == "" {
-		authKey = req.Mobile
-	}
-
-	// 1. 调用 RPC 服务的 Register 接口
-	// 这里将 API 的请求参数转换为 RPC 需要的请求参数
+	// 调用 RPC 注册服务
 	registerResp, err := l.svcCtx.UsercenterRpc.Register(l.ctx, &usercenter.RegisterReq{
 		Mobile:   req.Mobile,
 		Password: req.Password,
-		Nickname: req.Nickname,
-		AuthKey:  authKey,
-		AuthType: authType,
+		Name:     req.Name,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "req: %+v", req)
 	}
 
-	// 2. 将 RPC 的返回结果转换为 API 的响应格式
-	// 使用 copier 库可以简化结构体赋值 (go get github.com/jinzhu/copier)
-	// 如果不想引入 copier，也可以手动逐个字段赋值
-	var res types.RegisterResp
-	_ = copier.Copy(&res, registerResp)
+	return &types.RegisterResp{
+		AccessToken:  registerResp.AccessToken,
+		AccessExpire: registerResp.AccessExpire,
+		RefreshAfter: registerResp.RefreshAfter,
+	}, nil
+}
 
-	return &res, nil
-	// return
+// 自定义错误处理（可选）
+func (l *RegisterLogic) handleError(err error) error {
+	return errors.Wrapf(xerr.NewErrCode(xerr.SERVER_COMMON_ERROR), "register error: %v", err)
 }

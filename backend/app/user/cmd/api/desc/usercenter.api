@@ -2,23 +2,20 @@ syntax = "v1"
 
 info (
 	title:   "用户中心服务"
-	desc:    "负责用户注册、登录、信息管理"
-	author:  "YourName"
-	email:   "your_email@example.com"
+	desc:    "负责用户注册、登录、鉴权、配额管理"
+	author:  "Polaris-IO"
 	version: "v1"
 )
 
-// 核心：引入子模块
+// 引入类型定义
 import "user/user.api"
 
-// 如果未来有其他模块，例如“会员模块”，可以继续 import
-// import "vip/vip.api"
 // =====================================
-// 第一组：不需要登录鉴权的接口 (Public)
+// 无需登录的接口 (Public)
 // =====================================
 @server (
-	prefix: usercenter/v1 // 路由前缀，例如 /usercenter/v1/user/login
-	group:  user // 这一组生成的 handler 会放在 internal/handler/user 目录下
+	prefix: usercenter/v1
+	group:  user
 )
 service usercenter {
 	@doc "用户注册"
@@ -31,20 +28,20 @@ service usercenter {
 }
 
 // =====================================
-// 第二组：需要 JWT 鉴权的接口 (Private)
+// 需要 JWT 鉴权的接口 (Private)
 // =====================================
 @server (
 	prefix: usercenter/v1
 	group:  user
-	jwt:    JwtAuth // 开启 JWT 认证，在 etc/usercenter.yaml 中必须配置 JwtAuth
+	jwt:    JwtAuth
 )
 service usercenter {
 	@doc "获取当前用户信息"
-	@handler detail
-	post /user/detail (UserInfoReq) returns (UserInfoResp)
+	@handler userInfo
+	get /user/info (UserInfoReq) returns (UserInfoResp)
 
-	@doc "微信小程序授权登录(通常需要Token关联)"
-	@handler wxMiniAuth
-	post /user/wxMiniAuth (WxMiniAuthReq) returns (WxMiniAuthResp)
+	@doc "获取当前用户配额"
+	@handler userQuota
+	get /user/quota (UserQuotaReq) returns (UserQuotaResp)
 }
 

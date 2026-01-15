@@ -6,8 +6,8 @@ package handler
 import (
 	"net/http"
 
-	user "shared-board/backend/app/user/cmd/api/internal/handler/user"
-	"shared-board/backend/app/user/cmd/api/internal/svc"
+	user "polaris-io/backend/app/user/cmd/api/internal/handler/user"
+	"polaris-io/backend/app/user/cmd/api/internal/svc"
 
 	"github.com/zeromicro/go-zero/rest"
 )
@@ -35,15 +35,15 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 		[]rest.Route{
 			{
 				// 获取当前用户信息
-				Method:  http.MethodPost,
-				Path:    "/user/detail",
-				Handler: user.DetailHandler(serverCtx),
+				Method:  http.MethodGet,
+				Path:    "/user/info",
+				Handler: user.UserInfoHandler(serverCtx),
 			},
 			{
-				// 微信小程序授权登录(通常需要Token关联)
-				Method:  http.MethodPost,
-				Path:    "/user/wxMiniAuth",
-				Handler: user.WxMiniAuthHandler(serverCtx),
+				// 获取当前用户配额
+				Method:  http.MethodGet,
+				Path:    "/user/quota",
+				Handler: user.UserQuotaHandler(serverCtx),
 			},
 		},
 		rest.WithJwt(serverCtx.Config.JwtAuth.AccessSecret),

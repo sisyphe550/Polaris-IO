@@ -4,9 +4,9 @@ import (
 	"flag"
 	"fmt"
 
-	"shared-board/backend/app/user/cmd/api/internal/config"
-	"shared-board/backend/app/user/cmd/api/internal/handler"
-	"shared-board/backend/app/user/cmd/api/internal/svc"
+	"polaris-io/backend/app/user/cmd/api/internal/config"
+	"polaris-io/backend/app/user/cmd/api/internal/handler"
+	"polaris-io/backend/app/user/cmd/api/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/rest"

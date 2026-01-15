@@ -5,28 +5,34 @@ option go_package = "./pb";
 package pb;
 
 // =====================================
-// Data Models (数据模型)
+// 数据模型 (Data Models)
 // =====================================
 
+// 用户基本信息
 message User {
   int64  id = 1;
   string mobile = 2;
-  string nickname = 3;
+  string name = 3;
   string avatar = 4;
   string info = 5;
 }
 
+// 用户配额信息
+message UserQuota {
+  int64  userId = 1;
+  uint64 totalSize = 2;  // 总容量 (字节)
+  uint64 usedSize = 3;   // 已用容量 (字节)
+}
+
 // =====================================
-// Request & Response (请求与响应)
+// 请求与响应 (Request & Response)
 // =====================================
 
-// 1. 注册请求
+// --- 注册 ---
 message RegisterReq {
-  string mobile = 1;
-  string password = 2;
-  string nickname = 3; // 可选，默认为手机号或随机生成
-  string authKey = 4;  // 认证标识 (手机号/OpenId)
-  string authType = 5; // 认证类型 (mobile/wx)
+  string mobile = 1;    // 手机号 (必填)
+  string password = 2;  // 密码 (必填)
+  string name = 3;      // 昵称 (可选，默认随机生成)
 }
 
 message RegisterResp {
@@ -35,11 +41,10 @@ message RegisterResp {
   int64  refreshAfter = 3;
 }
 
-// 2. 登录请求
+// --- 登录 ---
 message LoginReq {
-  string authType = 1; // mobile/wx
-  string authKey = 2;  // 手机号/OpenId
-  string password = 3; // 仅 mobile 类型需要
+  string mobile = 1;    // 手机号
+  string password = 2;  // 密码
 }
 
 message LoginResp {
@@ -48,7 +53,7 @@ message LoginResp {
   int64  refreshAfter = 3;
 }
 
-// 3. 获取用户信息
+// --- 获取用户信息 ---
 message GetUserInfoReq {
   int64 userId = 1;
 }
@@ -57,7 +62,46 @@ message GetUserInfoResp {
   User user = 1;
 }
 
-// 4. 生成 Token (内部通用方法)
+// --- 获取用户配额 ---
+message GetUserQuotaReq {
+  int64 userId = 1;
+}
+
+message GetUserQuotaResp {
+  UserQuota quota = 1;
+}
+
+// --- 更新用户配额 (File 服务调用) ---
+message UpdateUserQuotaReq {
+  int64 userId = 1;
+  int64 sizeDelta = 2;  // 增量: 正数=增加已用, 负数=减少已用
+}
+
+message UpdateUserQuotaResp {
+  bool success = 1;
+}
+
+// --- 扣减配额 (上传前检查) ---
+message DeductQuotaReq {
+  int64  userId = 1;
+  uint64 size = 2;      // 要扣减的大小 (字节)
+}
+
+message DeductQuotaResp {
+  bool success = 1;
+}
+
+// --- 退还配额 (删除文件时) ---
+message RefundQuotaReq {
+  int64  userId = 1;
+  uint64 size = 2;      // 要退还的大小 (字节)
+}
+
+message RefundQuotaResp {
+  bool success = 1;
+}
+
+// --- 生成 Token (内部方法) ---
 message GenerateTokenReq {
   int64 userId = 1;
 }
@@ -69,27 +113,31 @@ message GenerateTokenResp {
 }
 
 // =====================================
-// Service Definition (服务定义)
+// 服务定义 (Service Definition)
 // =====================================
 
-service usercenter {
-  // -----------------------
-  // 业务逻辑接口
-  // -----------------------
+service Usercenter {
+  // -------- 认证相关 --------
+  // 用户注册 (同时创建 10GB 配额)
+  rpc Register(RegisterReq) returns(RegisterResp);
   
-  // 登录
-  rpc login(LoginReq) returns(LoginResp);
+  // 用户登录
+  rpc Login(LoginReq) returns(LoginResp);
   
-  // 注册
-  rpc register(RegisterReq) returns(RegisterResp);
-  
+  // 生成 Token (内部方法，供注册/登录调用)
+  rpc GenerateToken(GenerateTokenReq) returns(GenerateTokenResp);
+
+  // -------- 用户信息 --------
   // 获取用户信息
-  rpc getUserInfo(GetUserInfoReq) returns(GetUserInfoResp);
+  rpc GetUserInfo(GetUserInfoReq) returns(GetUserInfoResp);
+
+  // -------- 配额管理 (供 File 服务调用) --------
+  // 获取用户配额
+  rpc GetUserQuota(GetUserQuotaReq) returns(GetUserQuotaResp);
   
-  // -----------------------
-  // 工具/基础能力接口
-  // -----------------------
+  // 扣减配额 (上传文件前调用，带并发保护)
+  rpc DeductQuota(DeductQuotaReq) returns(DeductQuotaResp);
   
-  // 生成 Token (供内部逻辑调用)
-  rpc generateToken(GenerateTokenReq) returns(GenerateTokenResp);
+  // 退还配额 (删除文件时调用)
+  rpc RefundQuota(RefundQuotaReq) returns(RefundQuotaResp);
 }
