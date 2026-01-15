@@ -6,7 +6,7 @@ import (
 )
 
 type Config struct {
-	zrpc.RpcServerConf
+	zrpc.RpcServerConf // 内部已包含 Redis 配置
 
 	// JWT 配置
 	JwtAuth struct {
@@ -19,13 +19,6 @@ type Config struct {
 		DataSource string
 	}
 
-	// Redis 配置
-	Redis struct {
-		Host string
-		Type string
-		Pass string
-	}
-
-	// 缓存配置
+	// 缓存配置 (用于 sqlc 缓存)
 	Cache cache.CacheConf
 }
