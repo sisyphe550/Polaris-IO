@@ -3,35 +3,36 @@ Host: 0.0.0.0
 Port: 1001
 Mode: dev
 
-#jwtAuth
+# JWT 配置 (必须与 RPC 保持一致)
 JwtAuth:
-  AccessSecret: ae0536f9-6450-4606-8e13-5a19ed505da0 # 加密盐，必须保密
-  # AccessExpire: 31536000                             # 过期时间
+  AccessSecret: ae0536f9-6450-4606-8e13-5a19ed505da0
+  AccessExpire: 604800 # 7 天
 
-#监控
+# 监控
 Prometheus:
   Host: 0.0.0.0
   Port: 4001
   Path: /metrics
 
-#链路追踪
+# 链路追踪
+# 本地开发: 127.0.0.1:14268 | Docker 容器: jaeger:14268
 Telemetry:
   Name: usercenter-api
-  Endpoint: http://jaeger:14268/api/traces
-  # Endpoint: http://localhost:14268/api/traces
+  Endpoint: http://127.0.0.1:14268/api/traces
   Sampler: 1.0
   Batcher: jaeger
 
+# 日志
 Log:
   ServiceName: usercenter-api
-  Level: error
+  Level: info
 
-# #WxMiniConf
+# 微信小程序配置 (可选)
 # WxMiniConf:
-#   AppId: wx2add729fadddddd
-#   Secret: 20365395b3de9b2a9351ddddddd
+#   AppId: your_app_id
+#   Secret: your_secret
 
-#rpc service
+# RPC 客户端配置
 UsercenterRpcConf:
   Endpoints:
     - 127.0.0.1:2001

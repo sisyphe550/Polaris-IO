@@ -11,6 +11,13 @@ func init() {
 	message[TOKEN_GENERATE_ERROR] = "生成token失败"
 	message[DB_ERROR] = "数据库繁忙,请稍后再试"
 	message[DB_UPDATE_AFFECTED_ZERO_ERROR] = "更新数据影响行数为0"
+
+	// 用户模块
+	message[USER_NOT_EXIST] = "用户不存在"
+	message[USER_ALREADY_EXISTS] = "该手机号已注册"
+	message[USER_PASSWORD_ERROR] = "密码错误"
+	message[USER_QUOTA_EXCEEDED] = "存储空间不足"
+	message[USER_QUOTA_NOT_EXIST] = "配额记录不存在"
 }
 
 func MapErrMsg(errcode uint32) string {

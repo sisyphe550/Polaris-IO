@@ -7,32 +7,47 @@ package usercenter
 import (
 	"context"
 
-	"shared-board/backend/app/user/cmd/rpc/pb"
+	"polaris-io/backend/app/user/cmd/rpc/pb"
 
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 )
 
 type (
-	GenerateTokenReq  = pb.GenerateTokenReq
-	GenerateTokenResp = pb.GenerateTokenResp
-	GetUserInfoReq    = pb.GetUserInfoReq
-	GetUserInfoResp   = pb.GetUserInfoResp
-	LoginReq          = pb.LoginReq
-	LoginResp         = pb.LoginResp
-	RegisterReq       = pb.RegisterReq
-	RegisterResp      = pb.RegisterResp
-	User              = pb.User
+	DeductQuotaReq      = pb.DeductQuotaReq
+	DeductQuotaResp     = pb.DeductQuotaResp
+	GenerateTokenReq    = pb.GenerateTokenReq
+	GenerateTokenResp   = pb.GenerateTokenResp
+	GetUserInfoReq      = pb.GetUserInfoReq
+	GetUserInfoResp     = pb.GetUserInfoResp
+	GetUserQuotaReq     = pb.GetUserQuotaReq
+	GetUserQuotaResp    = pb.GetUserQuotaResp
+	LoginReq            = pb.LoginReq
+	LoginResp           = pb.LoginResp
+	RefundQuotaReq      = pb.RefundQuotaReq
+	RefundQuotaResp     = pb.RefundQuotaResp
+	RegisterReq         = pb.RegisterReq
+	RegisterResp        = pb.RegisterResp
+	UpdateUserQuotaReq  = pb.UpdateUserQuotaReq
+	UpdateUserQuotaResp = pb.UpdateUserQuotaResp
+	User                = pb.User
+	UserQuota           = pb.UserQuota
 
 	Usercenter interface {
-		// 登录
-		Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginResp, error)
-		// 注册
+		// -------- 认证相关 --------
 		Register(ctx context.Context, in *RegisterReq, opts ...grpc.CallOption) (*RegisterResp, error)
-		// 获取用户信息
-		GetUserInfo(ctx context.Context, in *GetUserInfoReq, opts ...grpc.CallOption) (*GetUserInfoResp, error)
-		// 生成 Token (供内部逻辑调用)
+		// 用户登录
+		Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginResp, error)
+		// 生成 Token (内部方法，供注册/登录调用)
 		GenerateToken(ctx context.Context, in *GenerateTokenReq, opts ...grpc.CallOption) (*GenerateTokenResp, error)
+		// -------- 用户信息 --------
+		GetUserInfo(ctx context.Context, in *GetUserInfoReq, opts ...grpc.CallOption) (*GetUserInfoResp, error)
+		// -------- 配额管理 (供 File 服务调用) --------
+		GetUserQuota(ctx context.Context, in *GetUserQuotaReq, opts ...grpc.CallOption) (*GetUserQuotaResp, error)
+		// 扣减配额 (上传文件前调用，带并发保护)
+		DeductQuota(ctx context.Context, in *DeductQuotaReq, opts ...grpc.CallOption) (*DeductQuotaResp, error)
+		// 退还配额 (删除文件时调用)
+		RefundQuota(ctx context.Context, in *RefundQuotaReq, opts ...grpc.CallOption) (*RefundQuotaResp, error)
 	}
 
 	defaultUsercenter struct {
@@ -46,26 +61,44 @@ func NewUsercenter(cli zrpc.Client) Usercenter {
 	}
 }
 
-// 登录
-func (m *defaultUsercenter) Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginResp, error) {
-	client := pb.NewUsercenterClient(m.cli.Conn())
-	return client.Login(ctx, in, opts...)
-}
-
-// 注册
+// -------- 认证相关 --------
 func (m *defaultUsercenter) Register(ctx context.Context, in *RegisterReq, opts ...grpc.CallOption) (*RegisterResp, error) {
 	client := pb.NewUsercenterClient(m.cli.Conn())
 	return client.Register(ctx, in, opts...)
 }
 
-// 获取用户信息
+// 用户登录
+func (m *defaultUsercenter) Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginResp, error) {
+	client := pb.NewUsercenterClient(m.cli.Conn())
+	return client.Login(ctx, in, opts...)
+}
+
+// 生成 Token (内部方法，供注册/登录调用)
+func (m *defaultUsercenter) GenerateToken(ctx context.Context, in *GenerateTokenReq, opts ...grpc.CallOption) (*GenerateTokenResp, error) {
+	client := pb.NewUsercenterClient(m.cli.Conn())
+	return client.GenerateToken(ctx, in, opts...)
+}
+
+// -------- 用户信息 --------
 func (m *defaultUsercenter) GetUserInfo(ctx context.Context, in *GetUserInfoReq, opts ...grpc.CallOption) (*GetUserInfoResp, error) {
 	client := pb.NewUsercenterClient(m.cli.Conn())
 	return client.GetUserInfo(ctx, in, opts...)
 }
 
-// 生成 Token (供内部逻辑调用)
-func (m *defaultUsercenter) GenerateToken(ctx context.Context, in *GenerateTokenReq, opts ...grpc.CallOption) (*GenerateTokenResp, error) {
+// -------- 配额管理 (供 File 服务调用) --------
+func (m *defaultUsercenter) GetUserQuota(ctx context.Context, in *GetUserQuotaReq, opts ...grpc.CallOption) (*GetUserQuotaResp, error) {
 	client := pb.NewUsercenterClient(m.cli.Conn())
-	return client.GenerateToken(ctx, in, opts...)
+	return client.GetUserQuota(ctx, in, opts...)
+}
+
+// 扣减配额 (上传文件前调用，带并发保护)
+func (m *defaultUsercenter) DeductQuota(ctx context.Context, in *DeductQuotaReq, opts ...grpc.CallOption) (*DeductQuotaResp, error) {
+	client := pb.NewUsercenterClient(m.cli.Conn())
+	return client.DeductQuota(ctx, in, opts...)
+}
+
+// 退还配额 (删除文件时调用)
+func (m *defaultUsercenter) RefundQuota(ctx context.Context, in *RefundQuotaReq, opts ...grpc.CallOption) (*RefundQuotaResp, error) {
+	client := pb.NewUsercenterClient(m.cli.Conn())
+	return client.RefundQuota(ctx, in, opts...)
 }

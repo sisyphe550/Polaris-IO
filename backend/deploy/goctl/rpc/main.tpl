@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	{{.imports}}
-	"shared-board/backend/pkg/interceptor/rpcserver"
+	"polaris-io/backend/pkg/interceptor/rpcserver"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"

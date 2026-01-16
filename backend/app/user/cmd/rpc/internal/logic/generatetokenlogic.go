@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"shared-board/backend/app/user/cmd/rpc/internal/svc"
-	"shared-board/backend/app/user/cmd/rpc/pb"
-	"shared-board/backend/pkg/ctxdata"
-	"shared-board/backend/pkg/xerr"
+	"polaris-io/backend/app/user/cmd/rpc/internal/svc"
+	"polaris-io/backend/app/user/cmd/rpc/pb"
+	"polaris-io/backend/pkg/ctxdata"
+	"polaris-io/backend/pkg/xerr"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
@@ -28,26 +28,13 @@ func NewGenerateTokenLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Gen
 	}
 }
 
-// 生成 Token (核心鉴权逻辑)
+// GenerateToken 生成 JWT Token (内部方法，供注册/登录调用)
 func (l *GenerateTokenLogic) GenerateToken(in *pb.GenerateTokenReq) (*pb.GenerateTokenResp, error) {
-	if in == nil || in.UserId <= 0 {
-		return nil, errors.Wrapf(xerr.NewErrCode(xerr.REUQEST_PARAM_ERROR), "invalid userId")
-	}
-
-	secret := l.svcCtx.Config.JwtAuth.AccessSecret
-	if secret == "" {
-		return nil, errors.Wrapf(xerr.NewErrCode(xerr.TOKEN_GENERATE_ERROR), "JwtAuth.AccessSecret is empty")
-	}
-
 	now := time.Now().Unix()
 	accessExpire := l.svcCtx.Config.JwtAuth.AccessExpire
-	if accessExpire <= 0 {
-		accessExpire = 31536000 // 1 year, keep consistent with your yaml default
-	}
-
-	accessToken, err := l.getJwtToken(secret, now, accessExpire, in.UserId)
+	accessToken, err := l.getJwtToken(l.svcCtx.Config.JwtAuth.AccessSecret, now, accessExpire, in.UserId)
 	if err != nil {
-		return nil, errors.Wrapf(xerr.NewErrCode(xerr.TOKEN_GENERATE_ERROR), "getJwtToken err userId:%d , err:%v", in.UserId, err)
+		return nil, errors.Wrapf(xerr.NewErrCode(xerr.TOKEN_GENERATE_ERROR), "getJwtToken err userId:%d, err:%v", in.UserId, err)
 	}
 
 	return &pb.GenerateTokenResp{
@@ -57,12 +44,12 @@ func (l *GenerateTokenLogic) GenerateToken(in *pb.GenerateTokenReq) (*pb.Generat
 	}, nil
 }
 
+// getJwtToken 生成 JWT Token
 func (l *GenerateTokenLogic) getJwtToken(secretKey string, iat, seconds, userId int64) (string, error) {
 	claims := make(jwt.MapClaims)
 	claims["exp"] = iat + seconds
 	claims["iat"] = iat
 	claims[ctxdata.CtxKeyJwtUserId] = userId
-
 	token := jwt.New(jwt.SigningMethodHS256)
 	token.Claims = claims
 	return token.SignedString([]byte(secretKey))

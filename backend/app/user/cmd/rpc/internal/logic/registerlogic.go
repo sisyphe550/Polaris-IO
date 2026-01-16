@@ -2,25 +2,26 @@ package logic
 
 import (
 	"context"
-	"strings"
 
-	"shared-board/backend/app/user/cmd/rpc/internal/svc"
-	"shared-board/backend/app/user/cmd/rpc/pb"
-	"shared-board/backend/app/user/model"
-	"shared-board/backend/pkg/xerr"
+	"polaris-io/backend/app/user/cmd/rpc/internal/svc"
+	"polaris-io/backend/app/user/cmd/rpc/pb"
+	"polaris-io/backend/app/user/model"
+	"polaris-io/backend/pkg/tool"
+	"polaris-io/backend/pkg/xerr"
 
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
+// 默认配额：10GB (字节)
+const DefaultQuotaSize uint64 = 10 * 1024 * 1024 * 1024
+
 type RegisterLogic struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
 	logx.Logger
 }
-
-var ErrUserAlreadyRegisterError = xerr.NewErrMsg("用户已注册")
 
 func NewRegisterLogic(ctx context.Context, svcCtx *svc.ServiceContext) *RegisterLogic {
 	return &RegisterLogic{
@@ -30,80 +31,65 @@ func NewRegisterLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Register
 	}
 }
 
-// 注册
+// Register 用户注册 (同时创建 10GB 配额)
 func (l *RegisterLogic) Register(in *pb.RegisterReq) (*pb.RegisterResp, error) {
-	if in == nil {
-		return nil, errors.Wrapf(xerr.NewErrCode(xerr.REUQEST_PARAM_ERROR), "empty request")
+	// 1. 检查手机号是否已注册
+	_, err := l.svcCtx.UserModel.FindOneByMobile(l.ctx, in.Mobile)
+	if err == nil {
+		return nil, errors.Wrapf(xerr.NewErrCode(xerr.USER_ALREADY_EXISTS), "mobile:%s already registered", in.Mobile)
 	}
-	authType := strings.TrimSpace(in.AuthType)
-	if authType == "" {
-		authType = "mobile"
-	}
-	if authType != "mobile" {
-		// 你暂时不实现微信小程序，这里直接拒绝非 mobile
-		return nil, errors.Wrapf(xerr.NewErrCodeMsg(xerr.REUQEST_PARAM_ERROR, "暂不支持该登录类型"), "authType:%s", authType)
-	}
-	if strings.TrimSpace(in.Mobile) == "" {
-		return nil, errors.Wrapf(xerr.NewErrCodeMsg(xerr.REUQEST_PARAM_ERROR, "mobile 不能为空"), "mobile empty")
-	}
-	if strings.TrimSpace(in.Password) == "" {
-		return nil, errors.Wrapf(xerr.NewErrCodeMsg(xerr.REUQEST_PARAM_ERROR, "password 不能为空"), "password empty")
+	if err != model.ErrNotFound {
+		return nil, errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "FindOneByMobile err:%v, mobile:%s", err, in.Mobile)
 	}
 
-	// users 表只有 username/password/avatar/info
-	// 将 “mobile/authKey” 映射到 username（优先使用 authKey）
-	username := strings.TrimSpace(in.AuthKey)
-	if username == "" {
-		username = strings.TrimSpace(in.Mobile)
-	}
-
-	passwordHash := md5ByString(in.Password)
-	var userId uint64
-
-	// 优先走 DB（如果配置了 DataSource）
-	if l.svcCtx.UsersModel != nil {
-		u, err := l.svcCtx.UsersModel.FindOneByUsername(l.ctx, username)
-		if err != nil && err != model.ErrNotFound {
-			return nil, errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "FindOneByUsername err username:%s, err:%v", username, err)
+	// 2. 事务：创建用户和配额
+	var userId int64
+	err = l.svcCtx.UserModel.Trans(l.ctx, func(ctx context.Context, session sqlx.Session) error {
+		// 2.1 创建用户
+		user := &model.User{
+			Mobile:   in.Mobile,
+			Password: tool.Md5ByString(in.Password),
+			Name:     in.Name,
 		}
-		if u != nil {
-			return nil, errors.Wrapf(ErrUserAlreadyRegisterError, "username:%s", username)
+		// 如果昵称为空，随机生成
+		if len(user.Name) == 0 {
+			user.Name = "用户" + tool.Krand(6, tool.KC_RAND_KIND_NUM)
 		}
 
-		if err := l.svcCtx.UsersModel.Trans(l.ctx, func(ctx context.Context, session sqlx.Session) error {
-			user := &model.Users{
-				Username: username,
-				Password: passwordHash,
-				Avatar:   "",
-				Info:     "",
-				Version:  1,
-			}
-			insertResult, err := l.svcCtx.UsersModel.Insert(ctx, session, user)
-			if err != nil {
-				return errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "Insert user err:%v", err)
-			}
-			lastId, err := insertResult.LastInsertId()
-			if err != nil {
-				return errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "LastInsertId err:%v", err)
-			}
-			userId = uint64(lastId)
-			return nil
-		}); err != nil {
-			return nil, err
+		insertResult, err := l.svcCtx.UserModel.Insert(ctx, session, user)
+		if err != nil {
+			return errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "Insert user err:%v, user:%+v", err, user)
 		}
-	} else {
-		// DB 未配置：使用内存仓库，方便你继续联调 api
-		if _, ok := l.svcCtx.MemUsers.FindOneByUsername(username); ok {
-			return nil, errors.Wrapf(ErrUserAlreadyRegisterError, "username:%s", username)
+		lastId, err := insertResult.LastInsertId()
+		if err != nil {
+			return errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "LastInsertId err:%v", err)
 		}
-		userId = l.svcCtx.MemUsers.Insert(username, passwordHash)
-	}
+		userId = lastId
 
-	tokenResp, err := NewGenerateTokenLogic(l.ctx, l.svcCtx).GenerateToken(&pb.GenerateTokenReq{
-		UserId: int64(userId),
+		// 2.2 创建配额记录 (默认 10GB)
+		quota := &model.UserQuota{
+			UserId:    uint64(userId),
+			TotalSize: DefaultQuotaSize,
+			UsedSize:  0,
+		}
+		_, err = l.svcCtx.UserQuotaModel.Insert(ctx, session, quota)
+		if err != nil {
+			return errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "Insert quota err:%v, quota:%+v", err, quota)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	// 3. 生成 Token
+	generateTokenLogic := NewGenerateTokenLogic(l.ctx, l.svcCtx)
+	tokenResp, err := generateTokenLogic.GenerateToken(&pb.GenerateTokenReq{
+		UserId: userId,
+	})
+	if err != nil {
+		return nil, errors.Wrapf(xerr.NewErrCode(xerr.TOKEN_GENERATE_ERROR), "GenerateToken err:%v, userId:%d", err, userId)
 	}
 
 	return &pb.RegisterResp{

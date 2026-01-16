@@ -7,9 +7,9 @@ package server
 import (
 	"context"
 
-	"shared-board/backend/app/user/cmd/rpc/internal/logic"
-	"shared-board/backend/app/user/cmd/rpc/internal/svc"
-	"shared-board/backend/app/user/cmd/rpc/pb"
+	"polaris-io/backend/app/user/cmd/rpc/internal/logic"
+	"polaris-io/backend/app/user/cmd/rpc/internal/svc"
+	"polaris-io/backend/app/user/cmd/rpc/pb"
 )
 
 type UsercenterServer struct {
@@ -23,26 +23,44 @@ func NewUsercenterServer(svcCtx *svc.ServiceContext) *UsercenterServer {
 	}
 }
 
-// 登录
-func (s *UsercenterServer) Login(ctx context.Context, in *pb.LoginReq) (*pb.LoginResp, error) {
-	l := logic.NewLoginLogic(ctx, s.svcCtx)
-	return l.Login(in)
-}
-
-// 注册
+// -------- 认证相关 --------
 func (s *UsercenterServer) Register(ctx context.Context, in *pb.RegisterReq) (*pb.RegisterResp, error) {
 	l := logic.NewRegisterLogic(ctx, s.svcCtx)
 	return l.Register(in)
 }
 
-// 获取用户信息
+// 用户登录
+func (s *UsercenterServer) Login(ctx context.Context, in *pb.LoginReq) (*pb.LoginResp, error) {
+	l := logic.NewLoginLogic(ctx, s.svcCtx)
+	return l.Login(in)
+}
+
+// 生成 Token (内部方法，供注册/登录调用)
+func (s *UsercenterServer) GenerateToken(ctx context.Context, in *pb.GenerateTokenReq) (*pb.GenerateTokenResp, error) {
+	l := logic.NewGenerateTokenLogic(ctx, s.svcCtx)
+	return l.GenerateToken(in)
+}
+
+// -------- 用户信息 --------
 func (s *UsercenterServer) GetUserInfo(ctx context.Context, in *pb.GetUserInfoReq) (*pb.GetUserInfoResp, error) {
 	l := logic.NewGetUserInfoLogic(ctx, s.svcCtx)
 	return l.GetUserInfo(in)
 }
 
-// 生成 Token (供内部逻辑调用)
-func (s *UsercenterServer) GenerateToken(ctx context.Context, in *pb.GenerateTokenReq) (*pb.GenerateTokenResp, error) {
-	l := logic.NewGenerateTokenLogic(ctx, s.svcCtx)
-	return l.GenerateToken(in)
+// -------- 配额管理 (供 File 服务调用) --------
+func (s *UsercenterServer) GetUserQuota(ctx context.Context, in *pb.GetUserQuotaReq) (*pb.GetUserQuotaResp, error) {
+	l := logic.NewGetUserQuotaLogic(ctx, s.svcCtx)
+	return l.GetUserQuota(in)
+}
+
+// 扣减配额 (上传文件前调用，带并发保护)
+func (s *UsercenterServer) DeductQuota(ctx context.Context, in *pb.DeductQuotaReq) (*pb.DeductQuotaResp, error) {
+	l := logic.NewDeductQuotaLogic(ctx, s.svcCtx)
+	return l.DeductQuota(in)
+}
+
+// 退还配额 (删除文件时调用)
+func (s *UsercenterServer) RefundQuota(ctx context.Context, in *pb.RefundQuotaReq) (*pb.RefundQuotaResp, error) {
+	l := logic.NewRefundQuotaLogic(ctx, s.svcCtx)
+	return l.RefundQuota(in)
 }

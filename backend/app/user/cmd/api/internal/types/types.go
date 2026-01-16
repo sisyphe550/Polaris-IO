@@ -4,9 +4,8 @@
 package types
 
 type LoginReq struct {
-	AuthType string `json:"authType"` // mobile/wx（当前逻辑默认 mobile）
-	AuthKey  string `json:"authKey"`  // 手机号/OpenId
-	Password string `json:"password"` // 仅 mobile 类型需要
+	Mobile   string `json:"mobile" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }
 
 type LoginResp struct {
@@ -16,11 +15,9 @@ type LoginResp struct {
 }
 
 type RegisterReq struct {
-	Mobile   string `json:"mobile"`
-	Password string `json:"password"`
-	Nickname string `json:"nickname"` // 可选
-	AuthKey  string `json:"authKey"`  // 可选：默认使用 mobile
-	AuthType string `json:"authType"` // 可选：默认 "mobile"
+	Mobile   string `json:"mobile" validate:"required,len=11"`  // 手机号
+	Password string `json:"password" validate:"required,min=6"` // 密码
+	Name     string `json:"name,optional"`                      // 昵称 (可选)
 }
 
 type RegisterResp struct {
@@ -30,11 +27,11 @@ type RegisterResp struct {
 }
 
 type User struct {
-	Id       int64  `json:"id"`
-	Mobile   string `json:"mobile"`
-	Nickname string `json:"nickname"`
-	Avatar   string `json:"avatar"`
-	Info     string `json:"info"`
+	Id     int64  `json:"id"`
+	Mobile string `json:"mobile"`
+	Name   string `json:"name"`
+	Avatar string `json:"avatar"`
+	Info   string `json:"info"`
 }
 
 type UserInfoReq struct {
@@ -44,14 +41,14 @@ type UserInfoResp struct {
 	User User `json:"user"`
 }
 
-type WxMiniAuthReq struct {
-	Code          string `json:"code"`
-	IV            string `json:"iv"`
-	EncryptedData string `json:"encryptedData"`
+type UserQuota struct {
+	TotalSize uint64 `json:"totalSize"` // 总容量 (字节)
+	UsedSize  uint64 `json:"usedSize"`  // 已用容量 (字节)
 }
 
-type WxMiniAuthResp struct {
-	AccessToken  string `json:"accessToken"`
-	AccessExpire int64  `json:"accessExpire"`
-	RefreshAfter int64  `json:"refreshAfter"`
+type UserQuotaReq struct {
+}
+
+type UserQuotaResp struct {
+	Quota UserQuota `json:"quota"`
 }

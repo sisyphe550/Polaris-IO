@@ -6,7 +6,7 @@ import (
 
 	{{if .time}}"time"{{end}}
 
-	"shared-board/backend/pkg/globalkey"
+	"polaris-io/backend/pkg/globalkey"
 	"github.com/Masterminds/squirrel"
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/stores/builder"

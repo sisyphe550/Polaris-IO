@@ -277,8 +277,8 @@ services:
     environment:
       TZ: Asia/Shanghai
       MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: wb-mongo-2024
-      MONGO_INITDB_DATABASE: whiteboard        # 初始化时创建的数据库
+      MONGO_INITDB_ROOT_PASSWORD: polaris-io-mongo-2026
+      MONGO_INITDB_DATABASE: polaris_io        # 初始化时创建的数据库
     ports:
       - "27017:27017"
     volumes:

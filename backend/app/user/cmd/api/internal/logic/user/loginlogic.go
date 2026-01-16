@@ -3,11 +3,11 @@ package user
 import (
 	"context"
 
-	"shared-board/backend/app/user/cmd/api/internal/svc"
-	"shared-board/backend/app/user/cmd/api/internal/types"
-	"shared-board/backend/app/user/cmd/rpc/usercenter"
+	"polaris-io/backend/app/user/cmd/api/internal/svc"
+	"polaris-io/backend/app/user/cmd/api/internal/types"
+	"polaris-io/backend/app/user/cmd/rpc/usercenter"
 
-	"github.com/jinzhu/copier"
+	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -17,7 +17,7 @@ type LoginLogic struct {
 	svcCtx *svc.ServiceContext
 }
 
-// 用户登录
+// NewLoginLogic 用户登录
 func NewLoginLogic(ctx context.Context, svcCtx *svc.ServiceContext) *LoginLogic {
 	return &LoginLogic{
 		Logger: logx.WithContext(ctx),
@@ -27,27 +27,18 @@ func NewLoginLogic(ctx context.Context, svcCtx *svc.ServiceContext) *LoginLogic 
 }
 
 func (l *LoginLogic) Login(req *types.LoginReq) (resp *types.LoginResp, err error) {
-	// todo: add your logic here and delete this line
-
-	authType := req.AuthType
-	if authType == "" {
-		authType = "mobile"
-	}
-
-	// 1. 调用 RPC 登录接口
+	// 调用 RPC 登录服务
 	loginResp, err := l.svcCtx.UsercenterRpc.Login(l.ctx, &usercenter.LoginReq{
-		AuthType: authType,
-		AuthKey:  req.AuthKey,
+		Mobile:   req.Mobile,
 		Password: req.Password,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "req: %+v", req)
 	}
 
-	// 2. 组装返回结果
-	var res types.LoginResp
-	_ = copier.Copy(&res, loginResp)
-
-	return &res, nil
-	// return
+	return &types.LoginResp{
+		AccessToken:  loginResp.AccessToken,
+		AccessExpire: loginResp.AccessExpire,
+		RefreshAfter: loginResp.RefreshAfter,
+	}, nil
 }

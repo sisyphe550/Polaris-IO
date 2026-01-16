@@ -3,7 +3,7 @@ package {{.PkgName}}
 import (
 	"net/http"
 
-	"shared-board/backend/pkg/result"
+	"polaris-io/backend/pkg/result"
 
 	"github.com/zeromicro/go-zero/rest/httpx"
 	{{.ImportPackages}}

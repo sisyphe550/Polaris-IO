@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.0
 // - protoc             v6.33.1
-// source: app/user/cmd/rpc/pb/usercenter.proto
+// source: pb/usercenter.proto
 
 package pb
 
@@ -19,24 +19,36 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Usercenter_Login_FullMethodName         = "/pb.usercenter/login"
-	Usercenter_Register_FullMethodName      = "/pb.usercenter/register"
-	Usercenter_GetUserInfo_FullMethodName   = "/pb.usercenter/getUserInfo"
-	Usercenter_GenerateToken_FullMethodName = "/pb.usercenter/generateToken"
+	Usercenter_Register_FullMethodName      = "/pb.Usercenter/Register"
+	Usercenter_Login_FullMethodName         = "/pb.Usercenter/Login"
+	Usercenter_GenerateToken_FullMethodName = "/pb.Usercenter/GenerateToken"
+	Usercenter_GetUserInfo_FullMethodName   = "/pb.Usercenter/GetUserInfo"
+	Usercenter_GetUserQuota_FullMethodName  = "/pb.Usercenter/GetUserQuota"
+	Usercenter_DeductQuota_FullMethodName   = "/pb.Usercenter/DeductQuota"
+	Usercenter_RefundQuota_FullMethodName   = "/pb.Usercenter/RefundQuota"
 )
 
 // UsercenterClient is the client API for Usercenter service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UsercenterClient interface {
-	// 登录
-	Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginResp, error)
-	// 注册
+	// -------- 认证相关 --------
+	// 用户注册 (同时创建 10GB 配额)
 	Register(ctx context.Context, in *RegisterReq, opts ...grpc.CallOption) (*RegisterResp, error)
+	// 用户登录
+	Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginResp, error)
+	// 生成 Token (内部方法，供注册/登录调用)
+	GenerateToken(ctx context.Context, in *GenerateTokenReq, opts ...grpc.CallOption) (*GenerateTokenResp, error)
+	// -------- 用户信息 --------
 	// 获取用户信息
 	GetUserInfo(ctx context.Context, in *GetUserInfoReq, opts ...grpc.CallOption) (*GetUserInfoResp, error)
-	// 生成 Token (供内部逻辑调用)
-	GenerateToken(ctx context.Context, in *GenerateTokenReq, opts ...grpc.CallOption) (*GenerateTokenResp, error)
+	// -------- 配额管理 (供 File 服务调用) --------
+	// 获取用户配额
+	GetUserQuota(ctx context.Context, in *GetUserQuotaReq, opts ...grpc.CallOption) (*GetUserQuotaResp, error)
+	// 扣减配额 (上传文件前调用，带并发保护)
+	DeductQuota(ctx context.Context, in *DeductQuotaReq, opts ...grpc.CallOption) (*DeductQuotaResp, error)
+	// 退还配额 (删除文件时调用)
+	RefundQuota(ctx context.Context, in *RefundQuotaReq, opts ...grpc.CallOption) (*RefundQuotaResp, error)
 }
 
 type usercenterClient struct {
@@ -45,16 +57,6 @@ type usercenterClient struct {
 
 func NewUsercenterClient(cc grpc.ClientConnInterface) UsercenterClient {
 	return &usercenterClient{cc}
-}
-
-func (c *usercenterClient) Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginResp, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(LoginResp)
-	err := c.cc.Invoke(ctx, Usercenter_Login_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *usercenterClient) Register(ctx context.Context, in *RegisterReq, opts ...grpc.CallOption) (*RegisterResp, error) {
@@ -67,10 +69,10 @@ func (c *usercenterClient) Register(ctx context.Context, in *RegisterReq, opts .
 	return out, nil
 }
 
-func (c *usercenterClient) GetUserInfo(ctx context.Context, in *GetUserInfoReq, opts ...grpc.CallOption) (*GetUserInfoResp, error) {
+func (c *usercenterClient) Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetUserInfoResp)
-	err := c.cc.Invoke(ctx, Usercenter_GetUserInfo_FullMethodName, in, out, cOpts...)
+	out := new(LoginResp)
+	err := c.cc.Invoke(ctx, Usercenter_Login_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,18 +89,67 @@ func (c *usercenterClient) GenerateToken(ctx context.Context, in *GenerateTokenR
 	return out, nil
 }
 
+func (c *usercenterClient) GetUserInfo(ctx context.Context, in *GetUserInfoReq, opts ...grpc.CallOption) (*GetUserInfoResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserInfoResp)
+	err := c.cc.Invoke(ctx, Usercenter_GetUserInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usercenterClient) GetUserQuota(ctx context.Context, in *GetUserQuotaReq, opts ...grpc.CallOption) (*GetUserQuotaResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserQuotaResp)
+	err := c.cc.Invoke(ctx, Usercenter_GetUserQuota_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usercenterClient) DeductQuota(ctx context.Context, in *DeductQuotaReq, opts ...grpc.CallOption) (*DeductQuotaResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeductQuotaResp)
+	err := c.cc.Invoke(ctx, Usercenter_DeductQuota_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *usercenterClient) RefundQuota(ctx context.Context, in *RefundQuotaReq, opts ...grpc.CallOption) (*RefundQuotaResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RefundQuotaResp)
+	err := c.cc.Invoke(ctx, Usercenter_RefundQuota_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UsercenterServer is the server API for Usercenter service.
 // All implementations must embed UnimplementedUsercenterServer
 // for forward compatibility.
 type UsercenterServer interface {
-	// 登录
-	Login(context.Context, *LoginReq) (*LoginResp, error)
-	// 注册
+	// -------- 认证相关 --------
+	// 用户注册 (同时创建 10GB 配额)
 	Register(context.Context, *RegisterReq) (*RegisterResp, error)
+	// 用户登录
+	Login(context.Context, *LoginReq) (*LoginResp, error)
+	// 生成 Token (内部方法，供注册/登录调用)
+	GenerateToken(context.Context, *GenerateTokenReq) (*GenerateTokenResp, error)
+	// -------- 用户信息 --------
 	// 获取用户信息
 	GetUserInfo(context.Context, *GetUserInfoReq) (*GetUserInfoResp, error)
-	// 生成 Token (供内部逻辑调用)
-	GenerateToken(context.Context, *GenerateTokenReq) (*GenerateTokenResp, error)
+	// -------- 配额管理 (供 File 服务调用) --------
+	// 获取用户配额
+	GetUserQuota(context.Context, *GetUserQuotaReq) (*GetUserQuotaResp, error)
+	// 扣减配额 (上传文件前调用，带并发保护)
+	DeductQuota(context.Context, *DeductQuotaReq) (*DeductQuotaResp, error)
+	// 退还配额 (删除文件时调用)
+	RefundQuota(context.Context, *RefundQuotaReq) (*RefundQuotaResp, error)
 	mustEmbedUnimplementedUsercenterServer()
 }
 
@@ -109,17 +160,26 @@ type UsercenterServer interface {
 // pointer dereference when methods are called.
 type UnimplementedUsercenterServer struct{}
 
+func (UnimplementedUsercenterServer) Register(context.Context, *RegisterReq) (*RegisterResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method Register not implemented")
+}
 func (UnimplementedUsercenterServer) Login(context.Context, *LoginReq) (*LoginResp, error) {
 	return nil, status.Error(codes.Unimplemented, "method Login not implemented")
 }
-func (UnimplementedUsercenterServer) Register(context.Context, *RegisterReq) (*RegisterResp, error) {
-	return nil, status.Error(codes.Unimplemented, "method Register not implemented")
+func (UnimplementedUsercenterServer) GenerateToken(context.Context, *GenerateTokenReq) (*GenerateTokenResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method GenerateToken not implemented")
 }
 func (UnimplementedUsercenterServer) GetUserInfo(context.Context, *GetUserInfoReq) (*GetUserInfoResp, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUserInfo not implemented")
 }
-func (UnimplementedUsercenterServer) GenerateToken(context.Context, *GenerateTokenReq) (*GenerateTokenResp, error) {
-	return nil, status.Error(codes.Unimplemented, "method GenerateToken not implemented")
+func (UnimplementedUsercenterServer) GetUserQuota(context.Context, *GetUserQuotaReq) (*GetUserQuotaResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUserQuota not implemented")
+}
+func (UnimplementedUsercenterServer) DeductQuota(context.Context, *DeductQuotaReq) (*DeductQuotaResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeductQuota not implemented")
+}
+func (UnimplementedUsercenterServer) RefundQuota(context.Context, *RefundQuotaReq) (*RefundQuotaResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method RefundQuota not implemented")
 }
 func (UnimplementedUsercenterServer) mustEmbedUnimplementedUsercenterServer() {}
 func (UnimplementedUsercenterServer) testEmbeddedByValue()                    {}
@@ -142,24 +202,6 @@ func RegisterUsercenterServer(s grpc.ServiceRegistrar, srv UsercenterServer) {
 	s.RegisterService(&Usercenter_ServiceDesc, srv)
 }
 
-func _Usercenter_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LoginReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UsercenterServer).Login(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Usercenter_Login_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsercenterServer).Login(ctx, req.(*LoginReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Usercenter_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RegisterReq)
 	if err := dec(in); err != nil {
@@ -178,20 +220,20 @@ func _Usercenter_Register_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Usercenter_GetUserInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserInfoReq)
+func _Usercenter_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UsercenterServer).GetUserInfo(ctx, in)
+		return srv.(UsercenterServer).Login(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Usercenter_GetUserInfo_FullMethodName,
+		FullMethod: Usercenter_Login_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsercenterServer).GetUserInfo(ctx, req.(*GetUserInfoReq))
+		return srv.(UsercenterServer).Login(ctx, req.(*LoginReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -214,30 +256,114 @@ func _Usercenter_GenerateToken_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Usercenter_GetUserInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserInfoReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsercenterServer).GetUserInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Usercenter_GetUserInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsercenterServer).GetUserInfo(ctx, req.(*GetUserInfoReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Usercenter_GetUserQuota_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserQuotaReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsercenterServer).GetUserQuota(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Usercenter_GetUserQuota_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsercenterServer).GetUserQuota(ctx, req.(*GetUserQuotaReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Usercenter_DeductQuota_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeductQuotaReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsercenterServer).DeductQuota(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Usercenter_DeductQuota_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsercenterServer).DeductQuota(ctx, req.(*DeductQuotaReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Usercenter_RefundQuota_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RefundQuotaReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsercenterServer).RefundQuota(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Usercenter_RefundQuota_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsercenterServer).RefundQuota(ctx, req.(*RefundQuotaReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Usercenter_ServiceDesc is the grpc.ServiceDesc for Usercenter service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Usercenter_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "pb.usercenter",
+	ServiceName: "pb.Usercenter",
 	HandlerType: (*UsercenterServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "login",
-			Handler:    _Usercenter_Login_Handler,
-		},
-		{
-			MethodName: "register",
+			MethodName: "Register",
 			Handler:    _Usercenter_Register_Handler,
 		},
 		{
-			MethodName: "getUserInfo",
+			MethodName: "Login",
+			Handler:    _Usercenter_Login_Handler,
+		},
+		{
+			MethodName: "GenerateToken",
+			Handler:    _Usercenter_GenerateToken_Handler,
+		},
+		{
+			MethodName: "GetUserInfo",
 			Handler:    _Usercenter_GetUserInfo_Handler,
 		},
 		{
-			MethodName: "generateToken",
-			Handler:    _Usercenter_GenerateToken_Handler,
+			MethodName: "GetUserQuota",
+			Handler:    _Usercenter_GetUserQuota_Handler,
+		},
+		{
+			MethodName: "DeductQuota",
+			Handler:    _Usercenter_DeductQuota_Handler,
+		},
+		{
+			MethodName: "RefundQuota",
+			Handler:    _Usercenter_RefundQuota_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "app/user/cmd/rpc/pb/usercenter.proto",
+	Metadata: "pb/usercenter.proto",
 }

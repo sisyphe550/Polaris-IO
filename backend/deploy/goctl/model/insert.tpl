@@ -1,6 +1,6 @@
 
 func (m *default{{.upperStartCamelObject}}Model) Insert(ctx context.Context,session sqlx.Session, data *{{.upperStartCamelObject}}) (sql.Result,error) {
-	data.DeleteTime = time.Unix(0,0)
+	data.DeleteTime = 0
 	data.DelState = globalkey.DelStateNo
 	{{if .withCache}}{{.keys}}
 	return m.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {

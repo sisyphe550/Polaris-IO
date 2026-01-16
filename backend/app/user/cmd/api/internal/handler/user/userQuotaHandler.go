@@ -11,17 +11,17 @@ import (
 	"polaris-io/backend/app/user/cmd/api/internal/types"
 )
 
-// 用户注册
-func RegisterHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+// 获取当前用户配额
+func UserQuotaHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.RegisterReq
+		var req types.UserQuotaReq
 		if err := httpx.Parse(r, &req); err != nil {
 			result.ParamErrorResult(r, w, err)
 			return
 		}
 
-		l := user.NewRegisterLogic(r.Context(), svcCtx)
-		resp, err := l.Register(&req)
+		l := user.NewUserQuotaLogic(r.Context(), svcCtx)
+		resp, err := l.UserQuota(&req)
 		result.HttpResult(r, w, resp, err)
 	}
 }

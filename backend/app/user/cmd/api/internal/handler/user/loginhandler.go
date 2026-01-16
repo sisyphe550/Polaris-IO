@@ -3,13 +3,12 @@ package user
 import (
 	"net/http"
 
-	"shared-board/backend/pkg/result"
-
-	"shared-board/backend/app/user/cmd/api/internal/logic/user"
-	"shared-board/backend/app/user/cmd/api/internal/svc"
-	"shared-board/backend/app/user/cmd/api/internal/types"
+	"polaris-io/backend/pkg/result"
 
 	"github.com/zeromicro/go-zero/rest/httpx"
+	"polaris-io/backend/app/user/cmd/api/internal/logic/user"
+	"polaris-io/backend/app/user/cmd/api/internal/svc"
+	"polaris-io/backend/app/user/cmd/api/internal/types"
 )
 
 // 用户登录
