@@ -1,6 +1,6 @@
 Name: file-api
 Host: 0.0.0.0
-Port: 8891
+Port: 1002
 Mode: dev
 
 # JWT 配置 (需与 usercenter 保持一致)
@@ -31,6 +31,12 @@ Telemetry:
   Endpoint: http://127.0.0.1:14268/api/traces
   Sampler: 1.0
   Batcher: jaeger
+
+# 监控
+Prometheus:
+  Host: 0.0.0.0
+  Port: 4003
+  Path: /metrics
 
 # 日志
 Log:
