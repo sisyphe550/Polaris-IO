@@ -34,9 +34,10 @@ MongoDB:
 
 # S3 (Garage) 配置
 # 本地开发: 127.0.0.1:3900 | Docker 容器内: garage:3900
+# 注意: Region 必须与 Garage 配置中的 region 一致，默认是 us-east-1
 S3:
   Endpoint: 127.0.0.1:3900
-  Region: garage
+  Region: us-east-1
   Bucket: polaris-bucket
   AccessKey: GK1b745dac9808425c935ac639
   SecretKey: f16100350e1f496215a9edfd9bb5944abf4e3b7fb54e83da7f0fb108e39bf509

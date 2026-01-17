@@ -125,7 +125,7 @@ db.file_meta.createIndex({ "hash": 1 }, { unique: true });
 ```yaml
 S3:
   Endpoint: "127.0.0.1:3900"           # 本地开发 | Docker: garage:3900
-  Region: "garage"
+  Region: "us-east-1"                  # 必须与 Garage 配置一致，默认 us-east-1
   Bucket: "polaris-bucket"
   AccessKey: "GK1b745dac9808425c935ac639"
   SecretKey: "f16100350e1f496215a9edfd9bb5944abf4e3b7fb54e83da7f0fb108e39bf509"

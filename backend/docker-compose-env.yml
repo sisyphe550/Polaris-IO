@@ -250,23 +250,26 @@ services:
     container_name: io-storage
     environment:
       TZ: Asia/Shanghai
-      RUST_LOG: info                           # 生产环境可改为 warn
-      GARAGE_ADMIN_TOKEN: wb-admin-token-2024  # 管理 API 认证令牌
+      RUST_LOG: info
+      # 这里的 Token 仅用于管理接口 (Admin API)，不是 S3 的 SecretKey
+      GARAGE_ADMIN_TOKEN: wb-admin-token-2024
+      # 告诉 Garage 使用固定配置文件
+      GARAGE_CONFIG_FILE: /etc/garage.toml
     ports:
       - "3900:3900"   # S3 API
-      - "3901:3901"   # RPC (节点间通信)
-      - "3902:3902"   # Admin API / Web 端点
+      - "3901:3901"   # RPC
+      - "3902:3902"   # Admin Web
     volumes:
       - ./data/garage/meta:/var/lib/garage/meta
       - ./data/garage/data:/var/lib/garage/data
       - ./deploy/config/garage.toml:/etc/garage.toml:ro
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://127.0.0.1:3903/health"]
+      # 注意：端口是 3902 (Admin API) 而不是 3903，除非你改了配置
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:3902/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 15s
     networks:
       - polaris-net
 

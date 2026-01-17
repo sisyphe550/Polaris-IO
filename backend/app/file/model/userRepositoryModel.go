@@ -128,9 +128,12 @@ func (m *customUserRepositoryModel) RestoreFile(ctx context.Context, session sql
 
 // HardDelete 彻底删除文件（物理删除）
 func (m *customUserRepositoryModel) HardDelete(ctx context.Context, session sqlx.Session, id uint64) error {
+	// 先尝试从缓存获取
 	data, err := m.FindOne(ctx, id)
 	if err != nil {
-		// 如果 FindOne 找不到（可能已被软删除），直接查询
+		// 如果 FindOne 找不到（可能已被软删除），直接查询数据库
+		// 必须先初始化 data，否则 QueryRowNoCacheCtx 会因为 nil 指针报错
+		data = &UserRepository{}
 		query := fmt.Sprintf("SELECT %s FROM %s WHERE id = ? LIMIT 1", userRepositoryRows, m.table)
 		err = m.QueryRowNoCacheCtx(ctx, data, query, id)
 		if err != nil {
