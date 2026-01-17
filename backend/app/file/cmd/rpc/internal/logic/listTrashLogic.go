@@ -5,7 +5,6 @@ import (
 
 	"polaris-io/backend/app/file/cmd/rpc/internal/svc"
 	"polaris-io/backend/app/file/cmd/rpc/pb"
-	"polaris-io/backend/pkg/globalkey"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -36,32 +35,35 @@ func (l *ListTrashLogic) ListTrash(in *pb.ListTrashReq) (*pb.ListTrashResp, erro
 		pageSize = 20
 	}
 
-	// 查询已删除的文件 (del_state = 1)
-	// 注意: 这里需要查询 del_state = 1 的记录，但 Model 默认过滤了已删除的
-	// 所以需要直接查询数据库
-	builder := l.svcCtx.UserRepositoryModel.SelectBuilder().
-		Where("user_id = ?", in.UserId).
-		Where("del_state = ?", globalkey.DelStateYes) // 已删除
+	// 查询已删除的文件
+	files, total, err := l.svcCtx.UserRepositoryModel.FindTrashList(l.ctx, uint64(in.UserId), page, pageSize)
+	if err != nil {
+		l.Logger.Errorf("ListTrash FindTrashList error: %v", err)
+		return nil, err
+	}
 
-	// 由于 FindPageListByPageWithTotal 会自动加 del_state = 0 条件
-	// 这里需要自定义查询或修改 Model
-	// 暂时使用 FindAll 然后手动分页
-	// TODO: 优化为真正的分页查询
-
-	// 先获取总数
-	countBuilder := l.svcCtx.UserRepositoryModel.SelectBuilder().
-		Where("user_id = ?", in.UserId)
-	// 由于 FindCount 也会加 del_state = 0，需要特殊处理
-	// 这里简化处理，后续可以在 Model 层添加专门的回收站查询方法
-
-	// 简化实现：直接返回空列表，等待 Model 层扩展
-	// 实际生产中应该扩展 Model 层添加 FindTrashList 方法
-
-	_ = builder
-	_ = countBuilder
+	// 转换为响应格式
+	list := make([]*pb.FileInfo, 0, len(files))
+	for _, f := range files {
+		isDir := f.Ext == "" && f.Hash == ""
+		list = append(list, &pb.FileInfo{
+			Id:         int64(f.Id),
+			Identity:   f.Identity,
+			Hash:       f.Hash,
+			UserId:     int64(f.UserId),
+			ParentId:   int64(f.ParentId),
+			Name:       f.Name,
+			Ext:        f.Ext,
+			Size:       f.Size,
+			Path:       f.Path,
+			IsDir:      isDir,
+			CreateTime: f.CreateTime.Unix(),
+			UpdateTime: int64(f.DeleteTime), // 使用 DeleteTime 作为删除时间返回
+		})
+	}
 
 	return &pb.ListTrashResp{
-		List:  []*pb.FileInfo{},
-		Total: 0,
+		List:  list,
+		Total: total,
 	}, nil
 }
