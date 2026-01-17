@@ -1,0 +1,107 @@
+syntax = "v1"
+
+info (
+	title:   "文件服务"
+	desc:    "负责文件上传、下载、目录管理、回收站"
+	author:  "Polaris-IO"
+	version: "v1"
+)
+
+// 引入类型定义
+import "file/file.api"
+
+// =====================================
+// 所有接口都需要 JWT 鉴权
+// =====================================
+// ----- 上传相关 -----
+@server (
+	prefix: file/v1
+	group:  upload
+	jwt:    JwtAuth
+)
+service file {
+	@doc "秒传检查 - 检查文件是否已存在"
+	@handler uploadCheck
+	post /upload/check (UploadCheckReq) returns (UploadCheckResp)
+
+	@doc "获取预签名上传URL"
+	@handler uploadPresign
+	post /upload/presign (UploadPresignReq) returns (UploadPresignResp)
+
+	@doc "上传完成回调"
+	@handler uploadComplete
+	post /upload/complete (UploadCompleteReq) returns (UploadCompleteResp)
+}
+
+// ----- 目录管理 -----
+@server (
+	prefix: file/v1
+	group:  folder
+	jwt:    JwtAuth
+)
+service file {
+	@doc "创建文件夹"
+	@handler folderCreate
+	post /folder/create (FolderCreateReq) returns (FolderCreateResp)
+}
+
+// ----- 文件操作 -----
+@server (
+	prefix: file/v1
+	group:  file
+	jwt:    JwtAuth
+)
+service file {
+	@doc "列出目录内容"
+	@handler fileList
+	get /list (FileListReq) returns (FileListResp)
+
+	@doc "获取文件详情"
+	@handler fileDetail
+	get /detail (FileDetailReq) returns (FileDetailResp)
+
+	@doc "获取下载URL"
+	@handler fileDownload
+	get /download (FileDownloadReq) returns (FileDownloadResp)
+
+	@doc "移动文件/文件夹"
+	@handler fileMove
+	post /move (FileMoveReq) returns (FileMoveResp)
+
+	@doc "重命名文件/文件夹"
+	@handler fileRename
+	post /rename (FileRenameReq) returns (FileRenameResp)
+
+	@doc "复制文件/文件夹"
+	@handler fileCopy
+	post /copy (FileCopyReq) returns (FileCopyResp)
+
+	@doc "删除文件/文件夹 (移入回收站)"
+	@handler fileDelete
+	post /delete (FileDeleteReq) returns (FileDeleteResp)
+}
+
+// ----- 回收站 -----
+@server (
+	prefix: file/v1
+	group:  trash
+	jwt:    JwtAuth
+)
+service file {
+	@doc "回收站列表"
+	@handler trashList
+	get /trash/list (TrashListReq) returns (TrashListResp)
+
+	@doc "恢复文件"
+	@handler trashRestore
+	post /trash/restore (TrashRestoreReq) returns (TrashRestoreResp)
+
+	@doc "彻底删除"
+	@handler trashDelete
+	post /trash/delete (TrashDeleteReq) returns (TrashDeleteResp)
+
+	@doc "清空回收站"
+	@handler trashClear
+	post /trash/clear (TrashClearReq) returns (TrashClearResp)
+}
+

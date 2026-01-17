@@ -1,0 +1,77 @@
+Name: file.rpc
+ListenOn: 0.0.0.0:2002
+Mode: dev
+
+# Etcd (生产环境启用):
+# Etcd:
+#   Hosts:
+#   - etcd:2379
+#   Key: file.rpc
+
+# 数据库配置
+# 本地开发: 127.0.0.1:33069 | Docker 容器内: mysql:3306
+DB:
+  DataSource: root:root@tcp(127.0.0.1:33069)/polaris_file?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+
+# Redis 配置
+# 本地开发: 127.0.0.1:36379 | Docker 容器内: redis:6379
+Redis:
+  Host: 127.0.0.1:36379
+  Type: node
+  Pass: polaris
+  Key: file-rpc
+
+# 缓存配置 (sqlc 缓存)
+Cache:
+  - Host: 127.0.0.1:36379
+    Pass: polaris
+
+# MongoDB 配置
+# 本地开发: 127.0.0.1:27017 | Docker 容器内: mongo:27017
+MongoDB:
+  Uri: mongodb://root:polaris-io-mongo-2026@127.0.0.1:27017
+  Database: polaris_file
+
+# S3 (Garage) 配置
+# 本地开发: 127.0.0.1:3900 | Docker 容器内: garage:3900
+S3:
+  Endpoint: 127.0.0.1:3900
+  Region: garage
+  Bucket: polaris-bucket
+  AccessKey: GK1b745dac9808425c935ac639
+  SecretKey: f16100350e1f496215a9edfd9bb5944abf4e3b7fb54e83da7f0fb108e39bf509
+  UseSSL: false
+
+# Kafka 生产者配置
+# 本地开发: 127.0.0.1:9094 | Docker 容器内: kafka:9092
+KafkaProducer:
+  Brokers:
+    - 127.0.0.1:9094
+  Topic: polaris-file-event
+
+# Usercenter RPC 客户端配置
+# 本地开发: 127.0.0.1:2001 | Docker 容器内: usercenter-rpc:2001
+UsercenterRpcConf:
+  Endpoints:
+    - 127.0.0.1:2001
+  NonBlock: true
+  Timeout: 5000
+
+# 监控
+Prometheus:
+  Host: 0.0.0.0
+  Port: 4003
+  Path: /metrics
+
+# 链路追踪
+# 本地开发: 127.0.0.1:14268 | Docker 容器: jaeger:14268
+Telemetry:
+  Name: file-rpc
+  Endpoint: http://127.0.0.1:14268/api/traces
+  Sampler: 1.0
+  Batcher: jaeger
+
+# 日志
+Log:
+  ServiceName: file-rpc
+  Level: info

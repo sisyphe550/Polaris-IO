@@ -1,14 +1,38 @@
 Name: file-api
 Host: 0.0.0.0
-Port: 8891 # 假设文件服务端口是 8891
+Port: 8891
+Mode: dev
 
-# ... 其他配置 (Auth, DB 等) ...
+# JWT 配置 (需与 usercenter 保持一致)
+JwtAuth:
+  AccessSecret: ae0536f9-6450-4606-8e13-5a19ed505da0
+  AccessExpire: 604800
 
-# 新增 S3 (Garage) 配置
-S3:
-  Endpoint: "127.0.0.1:3900"  # Garage 的 S3 API 端口
-  Region: "us-east-1"         # 我们在配置文件里写的 region
-  Bucket: "whiteboard-assets" # 你刚刚创建的桶名
-  AccessKey: "GK0a9c066cbf353922f110e794" # 👈 填入日志里的 Key ID
-  SecretKey: "34405fa712bd5c8054b50597228dab1ccee6ae8f3ca9d3811a4b7c22a2d59523" # 👈 填入日志里的 Secret key
-  UseSSL: false               # 本地开发通常不开启 SSL
+# File RPC 客户端配置
+# 本地开发: 127.0.0.1:2002 | Docker 容器内: file-rpc:2002
+FileRpcConf:
+  Endpoints:
+    - 127.0.0.1:2002
+  NonBlock: true
+  Timeout: 10000
+
+# Usercenter RPC 客户端配置 (用于配额操作)
+# 本地开发: 127.0.0.1:2001 | Docker 容器内: usercenter-rpc:2001
+UsercenterRpcConf:
+  Endpoints:
+    - 127.0.0.1:2001
+  NonBlock: true
+  Timeout: 5000
+
+# 链路追踪
+# 本地开发: 127.0.0.1:14268 | Docker 容器: jaeger:14268
+Telemetry:
+  Name: file-api
+  Endpoint: http://127.0.0.1:14268/api/traces
+  Sampler: 1.0
+  Batcher: jaeger
+
+# 日志
+Log:
+  ServiceName: file-api
+  Level: info

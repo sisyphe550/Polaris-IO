@@ -18,6 +18,30 @@ func init() {
 	message[USER_PASSWORD_ERROR] = "密码错误"
 	message[USER_QUOTA_EXCEEDED] = "存储空间不足"
 	message[USER_QUOTA_NOT_EXIST] = "配额记录不存在"
+
+	// 文件模块
+	message[FILE_NOT_EXIST] = "文件不存在"
+	message[FILE_ALREADY_EXISTS] = "文件已存在"
+	message[FILE_UPLOAD_FAILED] = "文件上传失败"
+	message[FILE_DOWNLOAD_FAILED] = "文件下载失败"
+	message[FILE_DELETE_FAILED] = "文件删除失败"
+	message[FILE_MOVE_FAILED] = "文件移动失败"
+	message[FILE_COPY_FAILED] = "文件复制失败"
+	message[FILE_RENAME_FAILED] = "文件重命名失败"
+	message[FOLDER_NOT_EXIST] = "文件夹不存在"
+	message[FOLDER_ALREADY_EXISTS] = "文件夹已存在"
+	message[FOLDER_CREATE_FAILED] = "文件夹创建失败"
+	message[FILE_NAME_INVALID] = "文件名无效"
+	message[FILE_NAME_DUPLICATE] = "同目录下已存在同名文件"
+	message[FILE_PARENT_NOT_EXIST] = "父目录不存在"
+	message[FILE_CANNOT_MOVE_TO_SELF] = "不能移动到自身或子目录"
+	message[FILE_IN_TRASH] = "文件在回收站中"
+	message[FILE_NOT_IN_TRASH] = "文件不在回收站中"
+	message[FILE_RESTORE_FAILED] = "文件恢复失败"
+	message[FILE_META_NOT_FOUND] = "文件元数据不存在"
+	message[S3_PRESIGN_FAILED] = "获取上传/下载链接失败"
+	message[S3_UPLOAD_FAILED] = "文件上传到存储服务失败"
+	message[S3_DELETE_FAILED] = "从存储服务删除文件失败"
 }
 
 func MapErrMsg(errcode uint32) string {
