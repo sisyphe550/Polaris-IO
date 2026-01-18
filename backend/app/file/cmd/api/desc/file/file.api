@@ -1,0 +1,199 @@
+syntax = "v1"
+
+info (
+	title:   "文件模块类型定义"
+	desc:    "文件相关的请求/响应类型"
+	author:  "Polaris-IO"
+	version: "v1"
+)
+
+// =====================================
+// 通用数据模型
+// =====================================
+
+// 文件/文件夹信息
+type FileItem {
+	Id         int64  `json:"id"`
+	Identity   string `json:"identity"`   // 文件唯一标识 (UUID)
+	Name       string `json:"name"`       // 文件名
+	Ext        string `json:"ext"`        // 扩展名 (文件夹为空)
+	Size       uint64 `json:"size"`       // 文件大小 (字节)
+	IsDir      bool   `json:"isDir"`      // 是否为文件夹
+	ParentId   int64  `json:"parentId"`   // 父目录ID
+	CreateTime int64  `json:"createTime"` // 创建时间戳
+	UpdateTime int64  `json:"updateTime"` // 更新时间戳
+}
+
+// 回收站文件信息 (包含删除时间)
+type TrashItem {
+	Id         int64  `json:"id"`
+	Identity   string `json:"identity"`
+	Name       string `json:"name"`
+	Ext        string `json:"ext"`
+	Size       uint64 `json:"size"`
+	IsDir      bool   `json:"isDir"`
+	DeleteTime int64  `json:"deleteTime"` // 删除时间戳
+}
+
+// =====================================
+// 上传相关
+// =====================================
+type (
+	// 秒传检查请求
+	UploadCheckReq {
+		Hash string `json:"hash" validate:"required"` // 文件 SHA256
+		Size uint64 `json:"size" validate:"required"` // 文件大小 (字节)
+		Name string `json:"name" validate:"required"` // 文件名
+		Ext  string `json:"ext"`                      // 扩展名
+	}
+	// 秒传检查响应
+	UploadCheckResp {
+		Exists   bool   `json:"exists"`             // 是否已存在 (秒传成功)
+		Identity string `json:"identity,omitempty"` // 秒传成功时返回文件标识
+	}
+
+	// 获取预签名上传URL请求
+	UploadPresignReq {
+		Hash     string `json:"hash" validate:"required"`     // 文件 SHA256
+		Size     uint64 `json:"size" validate:"required"`     // 文件大小
+		Name     string `json:"name" validate:"required"`     // 文件名
+		Ext      string `json:"ext"`                          // 扩展名
+		MimeType string `json:"mimeType"`                     // MIME 类型
+		ParentId int64  `json:"parentId,default=0"`           // 父目录ID (0=根目录)
+	}
+	// 获取预签名上传URL响应
+	UploadPresignResp {
+		UploadUrl string `json:"uploadUrl"` // S3 预签名上传 URL
+		UploadKey string `json:"uploadKey"` // 上传凭证 (用于 complete 接口)
+	}
+
+	// 上传完成回调请求
+	UploadCompleteReq {
+		UploadKey string `json:"uploadKey" validate:"required"` // 上传凭证
+		Hash      string `json:"hash" validate:"required"`      // 文件 SHA256
+		Size      uint64 `json:"size" validate:"required"`      // 文件大小
+		Name      string `json:"name" validate:"required"`      // 文件名
+		Ext       string `json:"ext"`                           // 扩展名
+		MimeType  string `json:"mimeType"`                      // MIME 类型
+		ParentId  int64  `json:"parentId,default=0"`            // 父目录ID
+	}
+	// 上传完成回调响应
+	UploadCompleteResp {
+		Identity string `json:"identity"` // 文件唯一标识
+	}
+)
+
+// =====================================
+// 目录管理
+// =====================================
+type (
+	// 创建文件夹请求
+	FolderCreateReq {
+		Name     string `json:"name" validate:"required,max=255"` // 文件夹名
+		ParentId int64  `json:"parentId,default=0"`               // 父目录ID (0=根目录)
+	}
+	FolderCreateResp {
+		Identity string `json:"identity"` // 文件夹唯一标识
+	}
+
+	// 列出目录内容请求
+	FileListReq {
+		ParentId int64  `form:"parentId,default=0"`  // 父目录ID (0=根目录)
+		Page     int64  `form:"page,default=1"`      // 页码
+		PageSize int64  `form:"pageSize,default=20"` // 每页数量
+		OrderBy  string `form:"orderBy,optional"`    // 排序字段: name, size, create_time
+		Order    string `form:"order,optional"`      // 排序方向: asc, desc
+	}
+	FileListResp {
+		List  []FileItem `json:"list"`
+		Total int64      `json:"total"`
+	}
+
+	// 移动文件/文件夹请求
+	FileMoveReq {
+		Identities []string `json:"identities" validate:"required,min=1"` // 文件标识列表
+		TargetId   int64    `json:"targetId"`                             // 目标目录ID (0=根目录)
+	}
+	FileMoveResp {
+	}
+
+	// 重命名请求
+	FileRenameReq {
+		Identity string `json:"identity" validate:"required"`    // 文件标识
+		Name     string `json:"name" validate:"required,max=255"` // 新名称
+	}
+	FileRenameResp {
+	}
+
+	// 复制文件/文件夹请求
+	FileCopyReq {
+		Identities []string `json:"identities" validate:"required,min=1"` // 文件标识列表
+		TargetId   int64    `json:"targetId"`                             // 目标目录ID (0=根目录)
+	}
+	FileCopyResp {
+	}
+)
+
+// =====================================
+// 文件操作
+// =====================================
+type (
+	// 获取下载URL请求
+	FileDownloadReq {
+		Identity string `form:"identity" validate:"required"` // 文件标识
+	}
+	FileDownloadResp {
+		Url string `json:"url"` // 预签名下载 URL
+	}
+
+	// 获取文件详情请求
+	FileDetailReq {
+		Identity string `form:"identity" validate:"required"` // 文件标识
+	}
+	FileDetailResp {
+		File FileItem `json:"file"`
+		Path []FileItem `json:"path"` // 路径面包屑 (从根目录到当前文件)
+	}
+
+	// 软删除请求 (移入回收站)
+	FileDeleteReq {
+		Identities []string `json:"identities" validate:"required,min=1"` // 文件标识列表
+	}
+	FileDeleteResp {
+	}
+)
+
+// =====================================
+// 回收站
+// =====================================
+type (
+	// 回收站列表请求
+	TrashListReq {
+		Page     int64 `form:"page,default=1"`      // 页码
+		PageSize int64 `form:"pageSize,default=20"` // 每页数量
+	}
+	TrashListResp {
+		List  []TrashItem `json:"list"`
+		Total int64       `json:"total"`
+	}
+
+	// 恢复文件请求
+	TrashRestoreReq {
+		Identities []string `json:"identities" validate:"required,min=1"` // 文件标识列表
+	}
+	TrashRestoreResp {
+	}
+
+	// 彻底删除请求
+	TrashDeleteReq {
+		Identities []string `json:"identities" validate:"required,min=1"` // 文件标识列表
+	}
+	TrashDeleteResp {
+	}
+
+	// 清空回收站请求
+	TrashClearReq {
+	}
+	TrashClearResp {
+	}
+)

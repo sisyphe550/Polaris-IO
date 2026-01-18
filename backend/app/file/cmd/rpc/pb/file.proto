@@ -1,0 +1,343 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+
+package pb;
+
+// =====================================
+// 数据模型 (Data Models)
+// =====================================
+
+// 文件/文件夹信息
+message FileInfo {
+  int64  id = 1;
+  string identity = 2;      // 文件唯一标识 (UUID)
+  string hash = 3;          // 文件 SHA256
+  int64  userId = 4;        // 所属用户ID
+  int64  parentId = 5;      // 父目录ID (0=根目录)
+  string name = 6;          // 文件名
+  string ext = 7;           // 扩展名 (文件夹为空)
+  uint64 size = 8;          // 文件大小 (字节)
+  string path = 9;          // S3 存储路径
+  bool   isDir = 10;        // 是否为文件夹
+  int64  createTime = 11;   // 创建时间戳
+  int64  updateTime = 12;   // 更新时间戳
+}
+
+// 文件元数据 (MongoDB file_meta)
+message FileMeta {
+  string id = 1;            // MongoDB ObjectId
+  string hash = 2;          // 文件 SHA256
+  uint64 size = 3;          // 文件大小
+  string s3Key = 4;         // S3 存储路径
+  string ext = 5;           // 扩展名
+  string mimeType = 6;      // MIME 类型
+  int64  refCount = 7;      // 引用计数
+}
+
+// =====================================
+// 上传相关 (Upload)
+// =====================================
+
+// --- 秒传检查 ---
+message CheckInstantUploadReq {
+  string hash = 1;          // 文件 SHA256
+  uint64 size = 2;          // 文件大小
+}
+
+message CheckInstantUploadResp {
+  bool     exists = 1;      // 是否存在 (可秒传)
+  FileMeta meta = 2;        // 存在时返回元数据
+}
+
+// --- 获取预签名上传URL ---
+message GetPresignedUploadUrlReq {
+  int64  userId = 1;
+  string hash = 2;          // 文件 SHA256
+  uint64 size = 3;          // 文件大小
+  string name = 4;          // 文件名
+  string ext = 5;           // 扩展名
+  string mimeType = 6;      // MIME 类型
+}
+
+message GetPresignedUploadUrlResp {
+  string uploadUrl = 1;     // S3 预签名上传 URL
+  string s3Key = 2;         // S3 存储路径
+}
+
+// --- 创建文件记录 (上传完成后调用) ---
+message CreateFileReq {
+  int64  userId = 1;
+  int64  parentId = 2;      // 父目录ID
+  string name = 3;          // 文件名
+  string ext = 4;           // 扩展名
+  string hash = 5;          // 文件 SHA256
+  uint64 size = 6;          // 文件大小
+  string s3Key = 7;         // S3 存储路径
+  string mimeType = 8;      // MIME 类型
+}
+
+message CreateFileResp {
+  string identity = 1;      // 文件唯一标识
+  int64  id = 2;            // 文件ID
+}
+
+// =====================================
+// 文件夹管理 (Folder)
+// =====================================
+
+// --- 创建文件夹 ---
+message CreateFolderReq {
+  int64  userId = 1;
+  int64  parentId = 2;      // 父目录ID
+  string name = 3;          // 文件夹名
+}
+
+message CreateFolderResp {
+  string identity = 1;      // 文件夹唯一标识
+  int64  id = 2;            // 文件夹ID
+}
+
+// =====================================
+// 文件查询 (Query)
+// =====================================
+
+// --- 获取文件信息 (供 Share 等服务调用) ---
+message GetFileInfoReq {
+  string identity = 1;      // 文件标识
+  int64  userId = 2;        // 用户ID (可选，用于权限验证)
+}
+
+message GetFileInfoResp {
+  FileInfo file = 1;
+}
+
+// --- 批量获取文件信息 ---
+message GetFilesByIdsReq {
+  repeated string identities = 1;  // 文件标识列表
+  int64 userId = 2;                // 用户ID
+}
+
+message GetFilesByIdsResp {
+  repeated FileInfo files = 1;
+}
+
+// --- 检查文件是否存在 ---
+message CheckFileExistsReq {
+  string identity = 1;
+  int64  userId = 2;
+}
+
+message CheckFileExistsResp {
+  bool exists = 1;
+}
+
+// --- 列出目录内容 ---
+message ListFilesReq {
+  int64  userId = 1;
+  int64  parentId = 2;      // 父目录ID (0=根目录)
+  int64  page = 3;
+  int64  pageSize = 4;
+  string orderBy = 5;       // 排序字段: name, size, create_time
+  string order = 6;         // 排序方向: asc, desc
+}
+
+message ListFilesResp {
+  repeated FileInfo list = 1;
+  int64 total = 2;
+}
+
+// --- 获取文件路径 (面包屑导航) ---
+message GetFilePathReq {
+  string identity = 1;
+  int64  userId = 2;
+}
+
+message GetFilePathResp {
+  repeated FileInfo path = 1;  // 从根目录到当前文件的路径
+}
+
+// =====================================
+// 文件操作 (Operations)
+// =====================================
+
+// --- 获取下载URL ---
+message GetDownloadUrlReq {
+  string identity = 1;
+  int64  userId = 2;
+}
+
+message GetDownloadUrlResp {
+  string url = 1;           // 预签名下载 URL
+}
+
+// --- 移动文件/文件夹 ---
+message MoveFilesReq {
+  int64  userId = 1;
+  repeated string identities = 2;  // 文件标识列表
+  int64  targetId = 3;             // 目标目录ID
+}
+
+message MoveFilesResp {
+  int64 movedCount = 1;     // 成功移动的数量
+}
+
+// --- 重命名 ---
+message RenameFileReq {
+  int64  userId = 1;
+  string identity = 2;
+  string name = 3;          // 新名称
+}
+
+message RenameFileResp {
+}
+
+// --- 复制文件/文件夹 ---
+message CopyFilesReq {
+  int64  userId = 1;
+  repeated string identities = 2;
+  int64  targetId = 3;      // 目标目录ID
+}
+
+message CopyFilesResp {
+  int64 copiedCount = 1;    // 成功复制的数量
+}
+
+// --- 软删除 (移入回收站) ---
+message SoftDeleteFilesReq {
+  int64  userId = 1;
+  repeated string identities = 2;
+}
+
+message SoftDeleteFilesResp {
+  int64 deletedCount = 1;
+  uint64 freedSize = 2;     // 释放的空间大小 (用于退还配额)
+}
+
+// =====================================
+// 回收站 (Trash)
+// =====================================
+
+// --- 回收站列表 ---
+message ListTrashReq {
+  int64 userId = 1;
+  int64 page = 2;
+  int64 pageSize = 3;
+}
+
+message ListTrashResp {
+  repeated FileInfo list = 1;
+  int64 total = 2;
+}
+
+// --- 恢复文件 ---
+message RestoreFilesReq {
+  int64  userId = 1;
+  repeated string identities = 2;
+}
+
+message RestoreFilesResp {
+  int64 restoredCount = 1;
+  uint64 usedSize = 2;      // 恢复后占用的空间 (用于扣减配额)
+}
+
+// --- 彻底删除 ---
+message HardDeleteFilesReq {
+  int64  userId = 1;
+  repeated string identities = 2;
+}
+
+message HardDeleteFilesResp {
+  int64 deletedCount = 1;
+}
+
+// --- 清空回收站 ---
+message ClearTrashReq {
+  int64 userId = 1;
+}
+
+message ClearTrashResp {
+  int64 deletedCount = 1;
+}
+
+// =====================================
+// 配额辅助 (Internal)
+// =====================================
+
+// --- 计算用户已用空间 ---
+message CalcUserUsedSizeReq {
+  int64 userId = 1;
+}
+
+message CalcUserUsedSizeResp {
+  uint64 usedSize = 1;
+}
+
+// =====================================
+// 服务定义 (Service Definition)
+// =====================================
+
+service FileService {
+  // -------- 上传相关 --------
+  // 秒传检查 (查询 MongoDB file_meta)
+  rpc CheckInstantUpload(CheckInstantUploadReq) returns(CheckInstantUploadResp);
+  
+  // 获取预签名上传 URL
+  rpc GetPresignedUploadUrl(GetPresignedUploadUrlReq) returns(GetPresignedUploadUrlResp);
+  
+  // 创建文件记录 (上传完成后调用)
+  rpc CreateFile(CreateFileReq) returns(CreateFileResp);
+
+  // -------- 文件夹管理 --------
+  // 创建文件夹
+  rpc CreateFolder(CreateFolderReq) returns(CreateFolderResp);
+
+  // -------- 文件查询 (供其他服务调用) --------
+  // 获取单个文件信息
+  rpc GetFileInfo(GetFileInfoReq) returns(GetFileInfoResp);
+  
+  // 批量获取文件信息
+  rpc GetFilesByIds(GetFilesByIdsReq) returns(GetFilesByIdsResp);
+  
+  // 检查文件是否存在
+  rpc CheckFileExists(CheckFileExistsReq) returns(CheckFileExistsResp);
+  
+  // 列出目录内容
+  rpc ListFiles(ListFilesReq) returns(ListFilesResp);
+  
+  // 获取文件路径 (面包屑)
+  rpc GetFilePath(GetFilePathReq) returns(GetFilePathResp);
+
+  // -------- 文件操作 --------
+  // 获取下载 URL
+  rpc GetDownloadUrl(GetDownloadUrlReq) returns(GetDownloadUrlResp);
+  
+  // 移动文件/文件夹
+  rpc MoveFiles(MoveFilesReq) returns(MoveFilesResp);
+  
+  // 重命名
+  rpc RenameFile(RenameFileReq) returns(RenameFileResp);
+  
+  // 复制文件/文件夹
+  rpc CopyFiles(CopyFilesReq) returns(CopyFilesResp);
+  
+  // 软删除 (移入回收站)
+  rpc SoftDeleteFiles(SoftDeleteFilesReq) returns(SoftDeleteFilesResp);
+
+  // -------- 回收站 --------
+  // 回收站列表
+  rpc ListTrash(ListTrashReq) returns(ListTrashResp);
+  
+  // 恢复文件
+  rpc RestoreFiles(RestoreFilesReq) returns(RestoreFilesResp);
+  
+  // 彻底删除
+  rpc HardDeleteFiles(HardDeleteFilesReq) returns(HardDeleteFilesResp);
+  
+  // 清空回收站
+  rpc ClearTrash(ClearTrashReq) returns(ClearTrashResp);
+
+  // -------- 内部方法 --------
+  // 计算用户已用空间
+  rpc CalcUserUsedSize(CalcUserUsedSizeReq) returns(CalcUserUsedSizeResp);
+}
