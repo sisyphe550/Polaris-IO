@@ -83,7 +83,10 @@ func (l *RegisterLogic) Register(in *pb.RegisterReq) (*pb.RegisterResp, error) {
 		return nil, err
 	}
 
-	// 3. 生成 Token
+	// 3. 预热配额缓存（可选，失败不影响主流程）
+	_ = l.svcCtx.UserQuotaModel.WarmUpCache(l.ctx, uint64(userId))
+
+	// 4. 生成 Token
 	generateTokenLogic := NewGenerateTokenLogic(l.ctx, l.svcCtx)
 	tokenResp, err := generateTokenLogic.GenerateToken(&pb.GenerateTokenReq{
 		UserId: userId,
