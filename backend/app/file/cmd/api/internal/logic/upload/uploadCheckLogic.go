@@ -6,7 +6,9 @@ import (
 	"polaris-io/backend/app/file/cmd/api/internal/svc"
 	"polaris-io/backend/app/file/cmd/api/internal/types"
 	"polaris-io/backend/app/file/cmd/rpc/fileservice"
+	"polaris-io/backend/app/user/cmd/rpc/usercenter"
 	"polaris-io/backend/pkg/ctxdata"
+	"polaris-io/backend/pkg/xerr"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -40,7 +42,17 @@ func (l *UploadCheckLogic) UploadCheck(req *types.UploadCheckReq) (resp *types.U
 
 	// 如果秒传成功，需要创建用户文件记录
 	if rpcResp.Exists && rpcResp.Meta != nil {
-		// 创建文件记录（秒传）
+		// 1. 先扣减用户配额（秒传也需要占用用户空间）
+		_, err = l.svcCtx.UsercenterRpc.DeductQuota(l.ctx, &usercenter.DeductQuotaReq{
+			UserId: userId,
+			Size:   req.Size,
+		})
+		if err != nil {
+			l.Logger.Errorf("UploadCheck DeductQuota error: %v", err)
+			return nil, xerr.NewErrCode(xerr.USER_QUOTA_EXCEEDED)
+		}
+
+		// 2. 创建文件记录（秒传）
 		createResp, err := l.svcCtx.FileRpc.CreateFile(l.ctx, &fileservice.CreateFileReq{
 			UserId:   userId,
 			ParentId: 0, // 默认根目录，可以后续移动
@@ -52,6 +64,11 @@ func (l *UploadCheckLogic) UploadCheck(req *types.UploadCheckReq) (resp *types.U
 			MimeType: rpcResp.Meta.MimeType,
 		})
 		if err != nil {
+			// 3. 创建文件记录失败，回滚配额
+			_, _ = l.svcCtx.UsercenterRpc.RefundQuota(l.ctx, &usercenter.RefundQuotaReq{
+				UserId: userId,
+				Size:   req.Size,
+			})
 			return nil, err
 		}
 
