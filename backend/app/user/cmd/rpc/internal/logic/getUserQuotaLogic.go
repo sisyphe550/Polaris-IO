@@ -27,14 +27,15 @@ func NewGetUserQuotaLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetU
 }
 
 // GetUserQuota 获取用户配额
+// 使用 Redis 缓存，优先从缓存读取
 func (l *GetUserQuotaLogic) GetUserQuota(in *pb.GetUserQuotaReq) (*pb.GetUserQuotaResp, error) {
-	// 根据用户 ID 查询配额
-	quota, err := l.svcCtx.UserQuotaModel.FindOneByUserId(l.ctx, uint64(in.UserId))
+	// 根据用户 ID 查询配额（使用缓存）
+	quota, err := l.svcCtx.UserQuotaModel.FindOneByUserIdWithCache(l.ctx, uint64(in.UserId))
 	if err != nil {
 		if err == model.ErrNotFound {
 			return nil, errors.Wrapf(xerr.NewErrCode(xerr.USER_QUOTA_NOT_EXIST), "userId:%d quota not found", in.UserId)
 		}
-		return nil, errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "FindOneByUserId err:%v, userId:%d", err, in.UserId)
+		return nil, errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "FindOneByUserIdWithCache err:%v, userId:%d", err, in.UserId)
 	}
 
 	return &pb.GetUserQuotaResp{

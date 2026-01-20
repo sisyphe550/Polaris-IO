@@ -192,6 +192,42 @@ WHERE user_id = ?
 
 ---
 
+### 4.4 缓存架构图
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                           user-rpc 服务                                   │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  GetUserInfo ──────────> UserModel.FindOneWithCache()                   │
+│       │                         │                                        │
+│       │                         ▼                                        │
+│       │                  ┌─────────────┐                                 │
+│       │                  │  sqlc 缓存   │  cache:user:id:{id}            │
+│       │                  │  (自动管理)  │                                 │
+│       │                  └─────────────┘                                 │
+│       │                         │                                        │
+│       │                  ┌──────┴──────┐                                 │
+│       │                  ▼             ▼                                 │
+│       │               Redis         MySQL                               │
+│       │                                                                  │
+│  GetUserQuota ───────> UserQuotaModel.FindOneByUserIdWithCache()       │
+│  DeductQuota  ───────> UserQuotaModel.DeductQuota()                    │
+│  RefundQuota  ───────> UserQuotaModel.RefundQuota()                    │
+│       │                         │                                        │
+│       │                         ▼                                        │
+│       │                  ┌─────────────┐                                 │
+│       │                  │ QuotaCache  │  user:quota:{userId}           │
+│       │                  │ (Lua 脚本)  │                                 │
+│       │                  └─────────────┘                                 │
+│       │                         │                                        │
+│       │                  ┌──────┴──────┐                                 │
+│       │                  ▼             ▼                                 │
+│       │               Redis         MySQL                               │
+│       │                                                                  │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
 ## 5. 安全设计
 
 ### 5.1 密码存储
@@ -266,65 +302,103 @@ RefreshToken: 有效期 7 天，用于刷新 AccessToken
 
 ---
 
+### ✅ 已完成优化
+
+#### 6.4 用户信息缓存（已实现）
+
+**实现方案**：使用 go-zero 的 sqlc 缓存
+
+```go
+// app/user/model/usermodel.go
+// 缓存 key 前缀
+const (
+    cacheUserIdPrefix     = "cache:user:id:"
+    cacheUserMobilePrefix = "cache:user:mobile:"
+)
+
+// NewUserModel 支持传入缓存配置
+func NewUserModel(conn sqlx.SqlConn, cacheConf ...cache.CacheConf) UserModel {
+    m := &customUserModel{
+        defaultUserModel: newUserModel(conn),
+    }
+    if len(cacheConf) > 0 && len(cacheConf[0]) > 0 {
+        m.cachedConn = sqlc.NewConn(conn, cacheConf[0])
+    }
+    return m
+}
+
+// FindOneWithCache 根据 ID 查询用户（走缓存）
+func (m *customUserModel) FindOneWithCache(ctx context.Context, id uint64) (*User, error) {
+    cacheKey := fmt.Sprintf("%s%d", cacheUserIdPrefix, id)
+    var resp User
+    err := m.cachedConn.QueryRowCtx(ctx, &resp, cacheKey, func(ctx context.Context, conn sqlx.SqlConn, v interface{}) error {
+        query := fmt.Sprintf("select %s from %s where id = ? and del_state = ? limit 1", userRows, m.table)
+        return conn.QueryRowCtx(ctx, v, query, id, globalkey.DelStateNo)
+    })
+    // ...
+}
+```
+
+**使用位置**：`GetUserInfoLogic.GetUserInfo()` 已改用 `FindOneWithCache()`
+
+---
+
+#### 6.5 配额操作缓存（已实现）
+
+**实现方案**：Redis 缓存 + Lua 脚本原子操作
+
+```go
+// pkg/quotacache/quotacache.go
+const (
+    QuotaCacheKeyPrefix = "user:quota:"
+    FieldTotalSize      = "total"
+    FieldUsedSize       = "used"
+    QuotaCacheExpire    = 86400  // 24小时
+)
+
+// DeductQuotaScript Lua 脚本: 扣减配额 (原子操作)
+const DeductQuotaScript = `
+local key = KEYS[1]
+local size = tonumber(ARGV[1])
+local exists = redis.call('EXISTS', key)
+if exists == 0 then return -2 end  -- 缓存不存在
+local used = tonumber(redis.call('HGET', key, 'used') or 0)
+local total = tonumber(redis.call('HGET', key, 'total') or 0)
+if used + size > total then return -1 end  -- 配额不足
+redis.call('HINCRBY', key, 'used', size)
+redis.call('EXPIRE', key, 86400)
+return 0
+`
+
+// RefundQuotaScript Lua 脚本: 退还配额 (原子操作)
+const RefundQuotaScript = `
+local key = KEYS[1]
+local size = tonumber(ARGV[1])
+local exists = redis.call('EXISTS', key)
+if exists == 0 then return -2 end
+local used = tonumber(redis.call('HGET', key, 'used') or 0)
+local newUsed = used - size
+if newUsed < 0 then newUsed = 0 end
+redis.call('HSET', key, 'used', newUsed)
+redis.call('EXPIRE', key, 86400)
+return 0
+`
+```
+
+**缓存策略**：
+- **扣减配额**：先查缓存 → 缓存命中则 Lua 原子扣减 → 同步更新数据库 → 失败则回滚缓存
+- **退还配额**：先更新数据库 → 再更新缓存 → 缓存失败则删除缓存（下次重新加载）
+- **缓存预热**：用户注册时自动预热配额缓存
+
+**使用位置**：
+- `DeductQuotaLogic.DeductQuota()` - 使用缓存加速配额检查
+- `RefundQuotaLogic.RefundQuota()` - 退还时同步更新缓存
+- `GetUserQuotaLogic.GetUserQuota()` - 改用 `FindOneByUserIdWithCache()`
+- `RegisterLogic.Register()` - 注册后预热缓存
+
+---
+
 ### 🟡 中优先级（后续版本优化）
-
-#### 6.4 用户信息缺少缓存
-
-**当前问题**：每次 `GetUserInfo` 都查数据库
-
-**优化方案**：
-
-```go
-// 使用 go-zero 的 sqlc 缓存（配置中已有，但 model 未启用）
-func NewUserModel(conn sqlx.SqlConn, c cache.CacheConf) UserModel {
-    return &customUserModel{
-        defaultUserModel: newUserModel(conn, c),  // 传入缓存配置
-    }
-}
-```
-
-或使用 Redis 手动缓存：
-```go
-func (l *GetUserInfoLogic) GetUserInfo(in *pb.GetUserInfoReq) (*pb.GetUserInfoResp, error) {
-    key := fmt.Sprintf("user:info:%d", in.UserId)
-    
-    // 1. 先查缓存
-    cached, err := l.svcCtx.Redis.Get(key)
-    if err == nil && cached != "" {
-        var user pb.User
-        json.Unmarshal([]byte(cached), &user)
-        return &pb.GetUserInfoResp{User: &user}, nil
-    }
-    
-    // 2. 查数据库
-    user, err := l.svcCtx.UserModel.FindOne(l.ctx, uint64(in.UserId))
-    
-    // 3. 写入缓存（5分钟过期）
-    l.svcCtx.Redis.Setex(key, json.Marshal(user), 300)
-    
-    return &pb.GetUserInfoResp{User: user}, nil
-}
-```
-
-#### 6.5 配额操作缺少缓存（你之前问的问题）
-
-**当前问题**：每次上传都查数据库
-
-**优化方案**：Redis 缓存配额
-```go
-// 缓存结构
-HSET user:quota:123 total 10737418240
-HSET user:quota:123 used  1073741824
-
-// 扣减配额（Lua 脚本保证原子性）
-EVAL "
-    local used = tonumber(redis.call('HGET', KEYS[1], 'used'))
-    local total = tonumber(redis.call('HGET', KEYS[1], 'total'))
-    if used + ARGV[1] > total then return -1 end
-    redis.call('HINCRBY', KEYS[1], 'used', ARGV[1])
-    return 0
-" 1 user:quota:123 1024
-```
 
 #### 6.6 缺少用户状态管理
 
