@@ -52,6 +52,7 @@ func (l *MoveFilesLogic) MoveFiles(in *pb.MoveFilesReq) (*pb.MoveFilesResp, erro
 	}
 
 	var movedCount int64
+	affectedParentIds := make(map[int64]struct{}) // 记录受影响的父目录
 
 	for _, identity := range in.Identities {
 		// 查询文件
@@ -77,6 +78,10 @@ func (l *MoveFilesLogic) MoveFiles(in *pb.MoveFilesReq) (*pb.MoveFilesResp, erro
 			// TODO: 检查是否移动到子目录
 		}
 
+		// 记录原父目录
+		oldParentId := int64(file.ParentId)
+		affectedParentIds[oldParentId] = struct{}{}
+
 		// 更新 parent_id
 		file.ParentId = uint64(in.TargetId)
 		_, err = l.svcCtx.UserRepositoryModel.Update(l.ctx, nil, file)
@@ -91,6 +96,20 @@ func (l *MoveFilesLogic) MoveFiles(in *pb.MoveFilesReq) (*pb.MoveFilesResp, erro
 		if err := l.svcCtx.KafkaProducer.SendFileUpdated(
 			l.ctx, in.UserId, int64(file.Id), identity, file.Name, in.TargetId); err != nil {
 			l.Logger.Errorf("MoveFiles SendFileUpdated error: %v", err)
+		}
+	}
+
+	// 清除文件列表缓存（源目录和目标目录）
+	if l.svcCtx.FileCache != nil && movedCount > 0 {
+		// 清除所有受影响的源目录缓存
+		for parentId := range affectedParentIds {
+			if err := l.svcCtx.FileCache.InvalidateUserFileListCache(l.ctx, in.UserId, parentId); err != nil {
+				l.Logger.Errorf("MoveFiles InvalidateUserFileListCache (source) error: %v", err)
+			}
+		}
+		// 清除目标目录缓存
+		if err := l.svcCtx.FileCache.InvalidateUserFileListCache(l.ctx, in.UserId, in.TargetId); err != nil {
+			l.Logger.Errorf("MoveFiles InvalidateUserFileListCache (target) error: %v", err)
 		}
 	}
 

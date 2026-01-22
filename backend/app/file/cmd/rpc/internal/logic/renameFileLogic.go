@@ -74,6 +74,13 @@ func (l *RenameFileLogic) RenameFile(in *pb.RenameFileReq) (*pb.RenameFileResp, 
 		return nil, xerr.NewErrCode(xerr.FILE_RENAME_FAILED)
 	}
 
+	// 清除文件列表缓存
+	if l.svcCtx.FileCache != nil {
+		if err := l.svcCtx.FileCache.InvalidateUserFileListCache(l.ctx, in.UserId, int64(file.ParentId)); err != nil {
+			l.Logger.Errorf("RenameFile InvalidateUserFileListCache error: %v", err)
+		}
+	}
+
 	// 发送 Kafka 更新事件
 	if err := l.svcCtx.KafkaProducer.SendFileUpdated(
 		l.ctx, in.UserId, int64(file.Id), in.Identity, in.Name, int64(file.ParentId)); err != nil {

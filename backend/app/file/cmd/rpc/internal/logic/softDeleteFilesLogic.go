@@ -33,6 +33,7 @@ func (l *SoftDeleteFilesLogic) SoftDeleteFiles(in *pb.SoftDeleteFilesReq) (*pb.S
 
 	var deletedCount int64
 	var freedSize uint64
+	affectedParentIds := make(map[int64]struct{}) // 记录受影响的父目录
 
 	for _, identity := range in.Identities {
 		// 查询文件
@@ -49,6 +50,9 @@ func (l *SoftDeleteFilesLogic) SoftDeleteFiles(in *pb.SoftDeleteFilesReq) (*pb.S
 		if int64(file.UserId) != in.UserId {
 			continue
 		}
+
+		// 记录受影响的父目录
+		affectedParentIds[int64(file.ParentId)] = struct{}{}
 
 		// 如果是文件夹，需要递归删除所有子文件/文件夹
 		if file.Ext == "" && file.Hash == "" {
@@ -69,6 +73,15 @@ func (l *SoftDeleteFilesLogic) SoftDeleteFiles(in *pb.SoftDeleteFilesReq) (*pb.S
 		// 发送 Kafka 删除事件
 		if err := l.svcCtx.KafkaProducer.SendFileDeleted(l.ctx, in.UserId, int64(file.Id), identity); err != nil {
 			l.Logger.Errorf("SoftDeleteFiles SendFileDeleted error: %v", err)
+		}
+	}
+
+	// 清除文件列表缓存
+	if l.svcCtx.FileCache != nil && deletedCount > 0 {
+		for parentId := range affectedParentIds {
+			if err := l.svcCtx.FileCache.InvalidateUserFileListCache(l.ctx, in.UserId, parentId); err != nil {
+				l.Logger.Errorf("SoftDeleteFiles InvalidateUserFileListCache error: %v", err)
+			}
 		}
 	}
 

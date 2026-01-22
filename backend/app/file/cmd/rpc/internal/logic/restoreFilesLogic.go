@@ -33,6 +33,7 @@ func (l *RestoreFilesLogic) RestoreFiles(in *pb.RestoreFilesReq) (*pb.RestoreFil
 
 	var restoredCount int64
 	var usedSize uint64
+	affectedParentIds := make(map[int64]struct{}) // 记录受影响的父目录
 
 	// 批量查询已删除的文件
 	files, err := l.svcCtx.UserRepositoryModel.FindDeletedByIdentities(l.ctx, uint64(in.UserId), in.Identities)
@@ -52,6 +53,9 @@ func (l *RestoreFilesLogic) RestoreFiles(in *pb.RestoreFilesReq) (*pb.RestoreFil
 				}
 			}
 		}
+
+		// 记录受影响的父目录
+		affectedParentIds[int64(file.ParentId)] = struct{}{}
 
 		// 恢复文件
 		if err := l.svcCtx.UserRepositoryModel.RestoreFile(l.ctx, nil, file); err != nil {
@@ -73,6 +77,15 @@ func (l *RestoreFilesLogic) RestoreFiles(in *pb.RestoreFilesReq) (*pb.RestoreFil
 		if err := l.svcCtx.KafkaProducer.SendFileUploaded(
 			l.ctx, in.UserId, int64(file.Id), file.Identity, file.Name, file.Hash, file.Size, file.Ext); err != nil {
 			l.Logger.Errorf("RestoreFiles SendFileUploaded error: %v", err)
+		}
+	}
+
+	// 清除文件列表缓存
+	if l.svcCtx.FileCache != nil && restoredCount > 0 {
+		for parentId := range affectedParentIds {
+			if err := l.svcCtx.FileCache.InvalidateUserFileListCache(l.ctx, in.UserId, parentId); err != nil {
+				l.Logger.Errorf("RestoreFiles InvalidateUserFileListCache error: %v", err)
+			}
 		}
 	}
 
