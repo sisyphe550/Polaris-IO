@@ -84,6 +84,13 @@ func (l *CreateFolderLogic) CreateFolder(in *pb.CreateFolderReq) (*pb.CreateFold
 
 	folderId, _ := result.LastInsertId()
 
+	// 清除文件列表缓存
+	if l.svcCtx.FileCache != nil {
+		if err := l.svcCtx.FileCache.InvalidateUserFileListCache(l.ctx, in.UserId, in.ParentId); err != nil {
+			l.Logger.Errorf("CreateFolder InvalidateUserFileListCache error: %v", err)
+		}
+	}
+
 	return &pb.CreateFolderResp{
 		Identity: identity,
 		Id:       folderId,

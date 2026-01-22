@@ -101,7 +101,14 @@ func (l *CreateFileLogic) CreateFile(in *pb.CreateFileReq) (*pb.CreateFileResp, 
 
 	fileId, _ := result.LastInsertId()
 
-	// 3. 发送 Kafka 事件
+	// 3. 清除文件列表缓存
+	if l.svcCtx.FileCache != nil {
+		if err := l.svcCtx.FileCache.InvalidateUserFileListCache(l.ctx, in.UserId, in.ParentId); err != nil {
+			l.Logger.Errorf("CreateFile InvalidateUserFileListCache error: %v", err)
+		}
+	}
+
+	// 4. 发送 Kafka 事件
 	if err := l.svcCtx.KafkaProducer.SendFileUploaded(
 		l.ctx,
 		in.UserId,

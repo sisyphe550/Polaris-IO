@@ -7,10 +7,12 @@ import (
 	"polaris-io/backend/app/file/model"
 	fileMongo "polaris-io/backend/app/file/mongo"
 	"polaris-io/backend/app/user/cmd/rpc/usercenter"
+	"polaris-io/backend/pkg/filecache"
 	"polaris-io/backend/pkg/kafka"
 	"polaris-io/backend/pkg/s3client"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/zrpc"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -35,6 +37,12 @@ type ServiceContext struct {
 
 	// Usercenter RPC Client
 	UsercenterRpc usercenter.Usercenter
+
+	// Redis 客户端
+	RedisClient *redis.Redis
+
+	// 文件缓存
+	FileCache *filecache.FileCache
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -85,6 +93,20 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	})
 	logx.Info("Kafka producer initialized successfully")
 
+	// 初始化 Redis 客户端（从 Cache 配置中获取）
+	var redisClient *redis.Redis
+	var fc *filecache.FileCache
+	if len(c.Cache) > 0 && c.Cache[0].Host != "" {
+		redisConf := redis.RedisConf{
+			Host: c.Cache[0].Host,
+			Type: "node",
+			Pass: c.Cache[0].Pass,
+		}
+		redisClient = redis.MustNewRedis(redisConf)
+		fc = filecache.NewFileCache(redisClient)
+		logx.Info("Redis client and FileCache initialized successfully")
+	}
+
 	return &ServiceContext{
 		Config: c,
 
@@ -103,5 +125,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 		// Usercenter RPC Client
 		UsercenterRpc: usercenter.NewUsercenter(zrpc.MustNewClient(c.UsercenterRpcConf)),
+
+		// Redis 客户端和缓存
+		RedisClient: redisClient,
+		FileCache:   fc,
 	}
 }

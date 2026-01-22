@@ -52,6 +52,13 @@ func (l *HardDeleteFilesLogic) HardDeleteFiles(in *pb.HardDeleteFilesReq) (*pb.H
 					// 继续处理，不影响删除
 				}
 
+				// 清除秒传缓存
+				if l.svcCtx.FileCache != nil {
+					if err := l.svcCtx.FileCache.DeleteFileMeta(l.ctx, file.Hash); err != nil {
+						l.Logger.Errorf("HardDeleteFiles DeleteFileMeta error: %v", err)
+					}
+				}
+
 				// TODO: 如果引用计数为 0，删除 S3 文件
 				// 这里可以发送一个异步任务到 mqueue 来处理
 			}
