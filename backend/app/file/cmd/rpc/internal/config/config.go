@@ -38,6 +38,12 @@ type Config struct {
 		Topic   string
 	}
 
+	// Asynq 配置（异步任务队列）
+	Asynq struct {
+		Addr     string // Redis 地址
+		Password string // Redis 密码
+	}
+
 	// Usercenter RPC 客户端配置
 	UsercenterRpcConf zrpc.RpcClientConf
 }

@@ -14,6 +14,7 @@ import (
 var (
 	ErrNotFound      = errors.New("file meta not found")
 	ErrAlreadyExists = errors.New("file meta already exists")
+	ErrRefCountZero  = errors.New("ref count already zero or negative")
 )
 
 type FileMetaModel interface {
@@ -27,6 +28,8 @@ type FileMetaModel interface {
 	IncrRefCount(ctx context.Context, hash string, delta int64) error
 	// DecrRefCount 减少引用计数
 	DecrRefCount(ctx context.Context, hash string, delta int64) error
+	// DecrRefCountAndGet 减少引用计数并返回更新后的记录（用于判断是否需要清理 S3）
+	DecrRefCountAndGet(ctx context.Context, hash string, delta int64) (*FileMeta, error)
 	// DeleteByHash 删除文件元数据 (当引用计数为0时)
 	DeleteByHash(ctx context.Context, hash string) error
 }
@@ -127,8 +130,66 @@ func (m *defaultFileMetaModel) IncrRefCount(ctx context.Context, hash string, de
 	return nil
 }
 
+// DecrRefCount 减少引用计数（带保护，防止扣减到负数）
 func (m *defaultFileMetaModel) DecrRefCount(ctx context.Context, hash string, delta int64) error {
-	return m.IncrRefCount(ctx, hash, -delta)
+	// 只有当 ref_count > 0 时才扣减，防止扣减到负数
+	filter := bson.M{
+		"hash":      hash,
+		"ref_count": bson.M{"$gt": 0}, // 保护条件：ref_count > 0
+	}
+	update := bson.M{
+		"$inc": bson.M{"ref_count": -delta},
+		"$set": bson.M{"update_time": time.Now()},
+	}
+
+	result, err := m.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+	if result.MatchedCount == 0 {
+		// 可能是记录不存在，也可能是 ref_count 已经 <= 0
+		// 先检查记录是否存在
+		_, findErr := m.FindByHash(ctx, hash)
+		if findErr != nil {
+			return ErrNotFound
+		}
+		// 记录存在但 ref_count <= 0
+		return ErrRefCountZero
+	}
+	return nil
+}
+
+// DecrRefCountAndGet 减少引用计数并返回更新后的记录
+// 使用 FindOneAndUpdate 保证原子性
+// 增加保护机制：只有当 ref_count > 0 时才扣减，防止扣减到负数
+func (m *defaultFileMetaModel) DecrRefCountAndGet(ctx context.Context, hash string, delta int64) (*FileMeta, error) {
+	// 保护条件：只有当 ref_count > 0 时才扣减
+	filter := bson.M{
+		"hash":      hash,
+		"ref_count": bson.M{"$gt": 0},
+	}
+	update := bson.M{
+		"$inc": bson.M{"ref_count": -delta},
+		"$set": bson.M{"update_time": time.Now()},
+	}
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+
+	var result FileMeta
+	err := m.collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&result)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			// 可能是记录不存在，也可能是 ref_count 已经 <= 0
+			// 先检查记录是否存在
+			existingMeta, findErr := m.FindByHash(ctx, hash)
+			if findErr != nil {
+				return nil, ErrNotFound
+			}
+			// 记录存在但 ref_count <= 0，返回当前记录（不扣减）
+			return existingMeta, ErrRefCountZero
+		}
+		return nil, err
+	}
+	return &result, nil
 }
 
 func (m *defaultFileMetaModel) DeleteByHash(ctx context.Context, hash string) error {

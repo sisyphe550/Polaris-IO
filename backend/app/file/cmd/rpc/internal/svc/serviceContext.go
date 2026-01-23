@@ -7,6 +7,7 @@ import (
 	"polaris-io/backend/app/file/model"
 	fileMongo "polaris-io/backend/app/file/mongo"
 	"polaris-io/backend/app/user/cmd/rpc/usercenter"
+	"polaris-io/backend/pkg/asynqjob"
 	"polaris-io/backend/pkg/filecache"
 	"polaris-io/backend/pkg/kafka"
 	"polaris-io/backend/pkg/s3client"
@@ -34,6 +35,9 @@ type ServiceContext struct {
 
 	// Kafka Producer
 	KafkaProducer *kafka.Producer
+
+	// Asynq Client（异步任务队列）
+	AsynqClient *asynqjob.AsynqClient
 
 	// Usercenter RPC Client
 	UsercenterRpc usercenter.Usercenter
@@ -107,6 +111,16 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		logx.Info("Redis client and FileCache initialized successfully")
 	}
 
+	// 初始化 Asynq 客户端
+	var asynqClient *asynqjob.AsynqClient
+	if c.Asynq.Addr != "" {
+		asynqClient = asynqjob.NewAsynqClient(asynqjob.AsynqClientConfig{
+			Addr:     c.Asynq.Addr,
+			Password: c.Asynq.Password,
+		})
+		logx.Info("Asynq client initialized successfully")
+	}
+
 	return &ServiceContext{
 		Config: c,
 
@@ -122,6 +136,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 		// Kafka Producer
 		KafkaProducer: kafkaProducer,
+
+		// Asynq Client
+		AsynqClient: asynqClient,
 
 		// Usercenter RPC Client
 		UsercenterRpc: usercenter.NewUsercenter(zrpc.MustNewClient(c.UsercenterRpcConf)),
