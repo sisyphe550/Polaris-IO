@@ -6,6 +6,8 @@ import (
 
 	"polaris-io/backend/app/file/cmd/rpc/internal/svc"
 	"polaris-io/backend/app/file/cmd/rpc/pb"
+	fileMongo "polaris-io/backend/app/file/mongo"
+	"polaris-io/backend/pkg/asynqjob"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -45,22 +47,56 @@ func (l *HardDeleteFilesLogic) HardDeleteFiles(in *pb.HardDeleteFilesReq) (*pb.H
 			subDeletedCount := l.hardDeleteFolder(file.Id, in.UserId)
 			deletedCount += subDeletedCount
 		} else {
-			// 减少 MongoDB file_meta 的引用计数
+			// 减少 MongoDB file_meta 的引用计数并获取更新后的记录
 			if file.Hash != "" {
-				if err := l.svcCtx.FileMetaModel.DecrRefCount(l.ctx, file.Hash, 1); err != nil {
-					l.Logger.Errorf("HardDeleteFiles DecrRefCount error: %v", err)
+				meta, err := l.svcCtx.FileMetaModel.DecrRefCountAndGet(l.ctx, file.Hash, 1)
+				if err != nil {
+					// 根据错误类型分别处理
+					switch {
+					case errors.Is(err, fileMongo.ErrNotFound):
+						// MongoDB 中没有这条记录，数据不一致，但不影响删除
+						l.Logger.Infof("HardDeleteFiles: file_meta not found in MongoDB, hash=%s", file.Hash)
+					case errors.Is(err, fileMongo.ErrRefCountZero):
+						// 引用计数已经为 0，说明已经被扣减过了，检查是否需要清理 S3
+						l.Logger.Infof("HardDeleteFiles: ref_count already zero, hash=%s", file.Hash)
+						if meta != nil && meta.RefCount <= 0 && l.svcCtx.AsynqClient != nil {
+							l.Logger.Infof("HardDeleteFiles: scheduling S3 cleanup for hash=%s, s3Key=%s",
+								file.Hash, meta.S3Key)
+							_ = l.svcCtx.AsynqClient.EnqueueS3Cleanup(l.ctx, asynqjob.S3CleanupPayload{
+								Hash:   file.Hash,
+								S3Key:  meta.S3Key,
+								UserId: in.UserId,
+							})
+						}
+					default:
+						l.Logger.Errorf("HardDeleteFiles DecrRefCountAndGet error: %v, hash=%s", err, file.Hash)
+					}
 					// 继续处理，不影响删除
-				}
+				} else {
+					// 清除秒传缓存
+					if l.svcCtx.FileCache != nil {
+						if err := l.svcCtx.FileCache.DeleteFileMeta(l.ctx, file.Hash); err != nil {
+							l.Logger.Errorf("HardDeleteFiles DeleteFileMeta error: %v", err)
+						}
+					}
 
-				// 清除秒传缓存
-				if l.svcCtx.FileCache != nil {
-					if err := l.svcCtx.FileCache.DeleteFileMeta(l.ctx, file.Hash); err != nil {
-						l.Logger.Errorf("HardDeleteFiles DeleteFileMeta error: %v", err)
+					// 如果引用计数为 0，发送异步任务删除 S3 文件
+					if meta.RefCount <= 0 {
+						l.Logger.Infof("HardDeleteFiles: ref_count=0, scheduling S3 cleanup for hash=%s, s3Key=%s",
+							file.Hash, meta.S3Key)
+
+						if l.svcCtx.AsynqClient != nil {
+							if err := l.svcCtx.AsynqClient.EnqueueS3Cleanup(l.ctx, asynqjob.S3CleanupPayload{
+								Hash:   file.Hash,
+								S3Key:  meta.S3Key,
+								UserId: in.UserId,
+							}); err != nil {
+								l.Logger.Errorf("HardDeleteFiles EnqueueS3Cleanup error: %v", err)
+								// 任务入队失败，记录日志但不影响删除
+							}
+						}
 					}
 				}
-
-				// TODO: 如果引用计数为 0，删除 S3 文件
-				// 这里可以发送一个异步任务到 mqueue 来处理
 			}
 		}
 
@@ -101,10 +137,40 @@ func (l *HardDeleteFilesLogic) hardDeleteFolder(folderId uint64, userId int64) i
 			subDeletedCount := l.hardDeleteFolder(file.Id, userId)
 			deletedCount += subDeletedCount
 		} else {
-			// 减少引用计数
+			// 减少引用计数并获取更新后的记录
 			if file.Hash != "" {
-				if err := l.svcCtx.FileMetaModel.DecrRefCount(l.ctx, file.Hash, 1); err != nil {
-					l.Logger.Errorf("hardDeleteFolder DecrRefCount error: %v", err)
+				meta, err := l.svcCtx.FileMetaModel.DecrRefCountAndGet(l.ctx, file.Hash, 1)
+				if err != nil {
+					// 根据错误类型分别处理
+					switch {
+					case errors.Is(err, fileMongo.ErrNotFound):
+						l.Logger.Infof("hardDeleteFolder: file_meta not found in MongoDB, hash=%s", file.Hash)
+					case errors.Is(err, fileMongo.ErrRefCountZero):
+						l.Logger.Infof("hardDeleteFolder: ref_count already zero, hash=%s", file.Hash)
+						if meta != nil && meta.RefCount <= 0 && l.svcCtx.AsynqClient != nil {
+							_ = l.svcCtx.AsynqClient.EnqueueS3Cleanup(l.ctx, asynqjob.S3CleanupPayload{
+								Hash:   file.Hash,
+								S3Key:  meta.S3Key,
+								UserId: userId,
+							})
+						}
+					default:
+						l.Logger.Errorf("hardDeleteFolder DecrRefCountAndGet error: %v, hash=%s", err, file.Hash)
+					}
+				} else {
+					// 清除秒传缓存
+					if l.svcCtx.FileCache != nil {
+						_ = l.svcCtx.FileCache.DeleteFileMeta(l.ctx, file.Hash)
+					}
+
+					// 如果引用计数为 0，发送异步任务删除 S3 文件
+					if meta.RefCount <= 0 && l.svcCtx.AsynqClient != nil {
+						_ = l.svcCtx.AsynqClient.EnqueueS3Cleanup(l.ctx, asynqjob.S3CleanupPayload{
+							Hash:   file.Hash,
+							S3Key:  meta.S3Key,
+							UserId: userId,
+						})
+					}
 				}
 			}
 		}
