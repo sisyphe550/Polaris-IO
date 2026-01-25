@@ -1582,9 +1582,10 @@ func (*RenameFileResp) Descriptor() ([]byte, []int) {
 // --- 复制文件/文件夹 ---
 type CopyFilesReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        int64                  `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"` // 源文件所有者ID
 	Identities    []string               `protobuf:"bytes,2,rep,name=identities,proto3" json:"identities,omitempty"`
-	TargetId      int64                  `protobuf:"varint,3,opt,name=targetId,proto3" json:"targetId,omitempty"` // 目标目录ID
+	TargetId      int64                  `protobuf:"varint,3,opt,name=targetId,proto3" json:"targetId,omitempty"`         // 目标目录ID
+	TargetUserId  int64                  `protobuf:"varint,4,opt,name=targetUserId,proto3" json:"targetUserId,omitempty"` // 目标用户ID（跨用户复制时使用，0表示同用户）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1636,6 +1637,13 @@ func (x *CopyFilesReq) GetIdentities() []string {
 func (x *CopyFilesReq) GetTargetId() int64 {
 	if x != nil {
 		return x.TargetId
+	}
+	return 0
+}
+
+func (x *CopyFilesReq) GetTargetUserId() int64 {
+	if x != nil {
+		return x.TargetUserId
 	}
 	return 0
 }
@@ -2399,13 +2407,14 @@ const file_app_file_cmd_rpc_pb_file_proto_rawDesc = "" +
 	"\x06userId\x18\x01 \x01(\x03R\x06userId\x12\x1a\n" +
 	"\bidentity\x18\x02 \x01(\tR\bidentity\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\"\x10\n" +
-	"\x0eRenameFileResp\"b\n" +
+	"\x0eRenameFileResp\"\x86\x01\n" +
 	"\fCopyFilesReq\x12\x16\n" +
 	"\x06userId\x18\x01 \x01(\x03R\x06userId\x12\x1e\n" +
 	"\n" +
 	"identities\x18\x02 \x03(\tR\n" +
 	"identities\x12\x1a\n" +
-	"\btargetId\x18\x03 \x01(\x03R\btargetId\"1\n" +
+	"\btargetId\x18\x03 \x01(\x03R\btargetId\x12\"\n" +
+	"\ftargetUserId\x18\x04 \x01(\x03R\ftargetUserId\"1\n" +
 	"\rCopyFilesResp\x12 \n" +
 	"\vcopiedCount\x18\x01 \x01(\x03R\vcopiedCount\"L\n" +
 	"\x12SoftDeleteFilesReq\x12\x16\n" +

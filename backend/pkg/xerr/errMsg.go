@@ -42,6 +42,18 @@ func init() {
 	message[S3_PRESIGN_FAILED] = "获取上传/下载链接失败"
 	message[S3_UPLOAD_FAILED] = "文件上传到存储服务失败"
 	message[S3_DELETE_FAILED] = "从存储服务删除文件失败"
+
+	// 分享模块
+	message[SHARE_NOT_EXIST] = "分享不存在"
+	message[SHARE_EXPIRED] = "分享已过期"
+	message[SHARE_CODE_ERROR] = "提取码错误"
+	message[SHARE_CANCELLED] = "分享已取消"
+	message[SHARE_BANNED] = "分享已被封禁"
+	message[SHARE_FILE_NOT_EXIST] = "分享的文件不存在"
+	message[SHARE_CREATE_FAILED] = "创建分享失败"
+	message[SHARE_ALREADY_EXISTS] = "该文件已被分享"
+	message[SHARE_SAVE_FAILED] = "保存分享失败"
+	message[SHARE_PERMISSION_DENIED] = "无权操作此分享"
 }
 
 func MapErrMsg(errcode uint32) string {

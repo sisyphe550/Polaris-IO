@@ -1,0 +1,69 @@
+syntax = "v1"
+
+info (
+	title:   "分享服务"
+	desc:    "负责文件分享、提取码验证、分享保存"
+	author:  "Polaris-IO"
+	version: "v1"
+)
+
+// 引入类型定义
+import "share/share.api"
+
+// =====================================
+// 需要登录的接口
+// =====================================
+// ----- 分享管理（需要登录） -----
+@server (
+	prefix: share/v1
+	group:  share
+	jwt:    JwtAuth
+)
+service share {
+	@doc "创建分享"
+	@handler createShare
+	post /create (CreateShareReq) returns (CreateShareResp)
+
+	@doc "我的分享列表"
+	@handler shareList
+	get /list (ShareListReq) returns (ShareListResp)
+
+	@doc "取消分享"
+	@handler cancelShare
+	post /cancel (CancelShareReq) returns (CancelShareResp)
+
+	@doc "更新分享"
+	@handler updateShare
+	post /update (UpdateShareReq) returns (UpdateShareResp)
+}
+
+// ----- 保存分享到网盘（需要登录） -----
+@server (
+	prefix: share/v1
+	group:  save
+	jwt:    JwtAuth
+)
+service share {
+	@doc "保存分享到我的网盘"
+	@handler saveShare
+	post /save (SaveShareReq) returns (SaveShareResp)
+}
+
+// =====================================
+// 公开接口（不需要登录）
+// =====================================
+// ----- 访问分享（公开） -----
+@server (
+	prefix: share/v1
+	group:  access
+)
+service share {
+	@doc "获取分享详情（验证提取码）"
+	@handler shareDetail
+	get /detail (ShareDetailReq) returns (ShareDetailResp)
+
+	@doc "获取分享文件下载链接"
+	@handler shareDownload
+	get /download (ShareDownloadReq) returns (ShareDownloadResp)
+}
+

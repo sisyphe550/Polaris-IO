@@ -1,0 +1,57 @@
+Name: share-api
+Host: 0.0.0.0
+Port: 1003
+Mode: dev
+
+# JWT 配置 (需与 usercenter 保持一致)
+JwtAuth:
+  AccessSecret: ae0536f9-6450-4606-8e13-5a19ed505da0
+  AccessExpire: 604800
+
+# Share RPC 客户端配置
+# 本地开发: 127.0.0.1:2003 | Docker 容器内: share-rpc:2003
+ShareRpcConf:
+  Endpoints:
+    - 127.0.0.1:2003
+  NonBlock: true
+  Timeout: 10000
+
+# File RPC 客户端配置（用于获取文件信息）
+# 本地开发: 127.0.0.1:2002 | Docker 容器内: file-rpc:2002
+FileRpcConf:
+  Endpoints:
+    - 127.0.0.1:2002
+  NonBlock: true
+  Timeout: 10000
+
+# Usercenter RPC 客户端配置 (用于获取用户信息)
+# 本地开发: 127.0.0.1:2001 | Docker 容器内: usercenter-rpc:2001
+UsercenterRpcConf:
+  Endpoints:
+    - 127.0.0.1:2001
+  NonBlock: true
+  Timeout: 5000
+
+# 分享链接配置
+Share:
+  # 分享链接前缀（用于生成分享URL）
+  BaseUrl: http://localhost:8081/share/v1/detail
+
+# 链路追踪
+# 本地开发: 127.0.0.1:14268 | Docker 容器: jaeger:14268
+Telemetry:
+  Name: share-api
+  Endpoint: http://127.0.0.1:14268/api/traces
+  Sampler: 1.0
+  Batcher: jaeger
+
+# 监控
+Prometheus:
+  Host: 0.0.0.0
+  Port: 4005
+  Path: /metrics
+
+# 日志
+Log:
+  ServiceName: share-api
+  Level: info
