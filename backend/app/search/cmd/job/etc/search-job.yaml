@@ -1,0 +1,35 @@
+Name: search-job
+Mode: dev
+
+# Kafka 消费者配置
+# 本地开发: 127.0.0.1:9094 | Docker 容器内: kafka:9092
+Kafka:
+  Brokers:
+    - 127.0.0.1:9094
+  Topic: polaris-file-event
+  GroupID: search-job-group
+
+# Elasticsearch 配置
+# 本地开发: http://127.0.0.1:9200 | Docker 容器内: http://elasticsearch:9200
+ES:
+  Addresses:
+    - http://127.0.0.1:9200
+  Username: ""
+  Password: ""
+  Index: polaris_file
+
+# 监控（注意：search-job 不占用 Prometheus 端口，由 mqueue 使用 4009）
+# 如需监控，可以通过日志和 Kafka 消费者组 lag 来监控
+
+# 链路追踪
+# 本地开发: 127.0.0.1:14268 | Docker 容器: jaeger:14268
+Telemetry:
+  Name: search-job
+  Endpoint: http://127.0.0.1:14268/api/traces
+  Sampler: 1.0
+  Batcher: jaeger
+
+# 日志
+Log:
+  ServiceName: search-job
+  Level: info

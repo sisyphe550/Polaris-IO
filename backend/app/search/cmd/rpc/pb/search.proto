@@ -1,0 +1,124 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+
+package pb;
+
+// =====================================
+// 数据模型 (Data Models)
+// =====================================
+
+// 搜索结果中的文件信息
+message FileItem {
+  string id = 1;            // 文件 identity
+  int64  fileId = 2;        // MySQL file_id
+  int64  userId = 3;        // 用户ID
+  string name = 4;          // 文件名
+  string ext = 5;           // 扩展名
+  uint64 size = 6;          // 文件大小
+  bool   isDir = 7;         // 是否为文件夹
+  int64  parentId = 8;      // 父目录ID
+  string hash = 9;          // 文件哈希
+  int64  createTime = 10;   // 创建时间
+  int64  updateTime = 11;   // 更新时间
+}
+
+// =====================================
+// 搜索接口
+// =====================================
+
+// 搜索文件请求
+message SearchFilesReq {
+  int64  userId = 1;                // 用户ID
+  string keyword = 2;               // 搜索关键词
+  repeated string ext = 3;          // 文件扩展名过滤
+  int64  isDir = 4;                 // -1:全部 0:文件 1:文件夹
+  uint64 minSize = 5;               // 最小文件大小
+  uint64 maxSize = 6;               // 最大文件大小
+  int64  page = 7;                  // 页码
+  int64  pageSize = 8;              // 每页数量
+  string sortBy = 9;                // 排序字段
+  bool   sortDesc = 10;             // 是否降序
+}
+
+// 搜索文件响应
+message SearchFilesResp {
+  int64 total = 1;                  // 总数
+  repeated FileItem list = 2;       // 文件列表
+}
+
+// =====================================
+// 索引管理接口（内部）
+// =====================================
+
+// 索引文件请求（上传完成后调用）
+message IndexFileReq {
+  string id = 1;            // 文件 identity
+  int64  userId = 2;        // 用户ID
+  int64  fileId = 3;        // MySQL file_id
+  string name = 4;          // 文件名
+  string ext = 5;           // 扩展名
+  uint64 size = 6;          // 文件大小
+  string hash = 7;          // 文件哈希
+  int64  parentId = 8;      // 父目录ID
+  bool   isDir = 9;         // 是否为文件夹
+}
+
+message IndexFileResp {
+}
+
+// 更新文件索引请求
+message UpdateFileIndexReq {
+  string id = 1;            // 文件 identity
+  string name = 2;          // 新文件名（空字符串表示不更新）
+  int64  parentId = 3;      // 新父目录ID（0 表示根目录）
+  bool   updateParentId = 4; // 是否更新 parentId（用于区分 "不更新" 和 "更新为0"）
+}
+
+message UpdateFileIndexResp {
+}
+
+// 删除文件索引请求
+message DeleteFileIndexReq {
+  string id = 1;            // 文件 identity
+}
+
+message DeleteFileIndexResp {
+}
+
+// =====================================
+// 统计接口
+// =====================================
+
+// 获取用户文件统计
+message GetUserStatsReq {
+  int64 userId = 1;
+}
+
+message GetUserStatsResp {
+  int64 totalFiles = 1;     // 文件总数
+  int64 totalFolders = 2;   // 文件夹总数
+}
+
+// =====================================
+// 服务定义 (Service Definition)
+// =====================================
+
+service SearchService {
+  // -------- 搜索接口 --------
+  // 搜索文件
+  rpc SearchFiles(SearchFilesReq) returns(SearchFilesResp);
+  
+  // 获取用户文件统计
+  rpc GetUserStats(GetUserStatsReq) returns(GetUserStatsResp);
+
+  // -------- 索引管理（内部调用） --------
+  // 索引文件（供 file-rpc 调用，作为 Kafka 的备选方案）
+  rpc IndexFile(IndexFileReq) returns(IndexFileResp);
+  
+  // 更新文件索引
+  rpc UpdateFileIndex(UpdateFileIndexReq) returns(UpdateFileIndexResp);
+  
+  // 删除文件索引
+  rpc DeleteFileIndex(DeleteFileIndexReq) returns(DeleteFileIndexResp);
+}

@@ -1,0 +1,54 @@
+syntax = "v1"
+
+// =====================================
+// 数据模型
+// =====================================
+
+// 搜索结果中的文件信息
+type FileItem {
+	Id         string `json:"id"`          // 文件 identity
+	FileId     int64  `json:"fileId"`      // MySQL file_id
+	Name       string `json:"name"`        // 文件名
+	Ext        string `json:"ext"`         // 扩展名
+	Size       uint64 `json:"size"`        // 文件大小
+	IsDir      bool   `json:"isDir"`       // 是否为文件夹
+	ParentId   int64  `json:"parentId"`    // 父目录ID
+	CreateTime int64  `json:"createTime"`  // 创建时间
+	UpdateTime int64  `json:"updateTime"`  // 更新时间
+}
+
+// =====================================
+// 搜索接口
+// =====================================
+
+// 文件搜索请求
+type SearchFilesReq {
+	Keyword  string   `form:"keyword,optional"`   // 搜索关键词
+	Ext      []string `form:"ext,optional"`       // 文件扩展名过滤
+	IsDir    *bool    `form:"isDir,optional"`     // 是否只搜索文件夹
+	MinSize  *uint64  `form:"minSize,optional"`   // 最小文件大小
+	MaxSize  *uint64  `form:"maxSize,optional"`   // 最大文件大小
+	Page     int      `form:"page,default=1"`     // 页码
+	PageSize int      `form:"pageSize,default=20"` // 每页数量
+	SortBy   string   `form:"sortBy,optional"`    // 排序字段: name, size, create_time, update_time
+	SortDesc bool     `form:"sortDesc,optional"`  // 是否降序
+}
+
+// 文件搜索响应
+type SearchFilesResp {
+	Total int64      `json:"total"` // 总数
+	List  []FileItem `json:"list"`  // 文件列表
+}
+
+// =====================================
+// 统计接口
+// =====================================
+
+// 获取用户文件统计
+type GetUserStatsReq {
+}
+
+type GetUserStatsResp {
+	TotalFiles   int64 `json:"totalFiles"`   // 文件总数
+	TotalFolders int64 `json:"totalFolders"` // 文件夹总数
+}

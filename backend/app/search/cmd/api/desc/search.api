@@ -1,0 +1,29 @@
+syntax = "v1"
+
+info (
+	title:   "搜索服务"
+	desc:    "提供文件搜索功能"
+	author:  "Polaris-IO"
+	version: "v1"
+)
+
+import "search/search.api"
+
+// =====================================
+// 搜索接口（需要登录）
+// =====================================
+@server (
+	prefix: search/v1
+	group:  search
+	jwt:    JwtAuth
+)
+service search {
+	@doc "搜索文件"
+	@handler searchFiles
+	get /files (SearchFilesReq) returns (SearchFilesResp)
+
+	@doc "获取用户文件统计"
+	@handler getUserStats
+	get /stats (GetUserStatsReq) returns (GetUserStatsResp)
+}
+
