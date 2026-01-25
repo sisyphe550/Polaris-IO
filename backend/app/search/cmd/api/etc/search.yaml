@@ -1,0 +1,36 @@
+Name: search-api
+Host: 0.0.0.0
+Port: 1004
+Mode: dev
+
+# JWT 配置 (需与 usercenter 保持一致)
+JwtAuth:
+  AccessSecret: ae0536f9-6450-4606-8e13-5a19ed505da0
+  AccessExpire: 604800
+
+# Search RPC 客户端配置
+# 本地开发: 127.0.0.1:2004 | Docker 容器内: search-rpc:2004
+SearchRpcConf:
+  Endpoints:
+    - 127.0.0.1:2004
+  NonBlock: true
+  Timeout: 10000
+
+# 链路追踪
+# 本地开发: 127.0.0.1:14268 | Docker 容器: jaeger:14268
+Telemetry:
+  Name: search-api
+  Endpoint: http://127.0.0.1:14268/api/traces
+  Sampler: 1.0
+  Batcher: jaeger
+
+# 监控
+Prometheus:
+  Host: 0.0.0.0
+  Port: 4007
+  Path: /metrics
+
+# 日志
+Log:
+  ServiceName: search-api
+  Level: info

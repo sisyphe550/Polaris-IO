@@ -31,7 +31,7 @@ type FileEvent struct {
 	Hash      string `json:"hash,omitempty"`
 	Size      uint64 `json:"size,omitempty"`
 	Ext       string `json:"ext,omitempty"`
-	ParentId  int64  `json:"parent_id,omitempty"`
+	ParentId  int64  `json:"parent_id"` // 不使用 omitempty，0 表示根目录
 	Timestamp string `json:"timestamp"`
 }
 
