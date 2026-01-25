@@ -43,3 +43,15 @@ const FILE_META_NOT_FOUND uint32 = 300019      // 文件元数据不存在
 const S3_PRESIGN_FAILED uint32 = 300020        // S3 预签名失败
 const S3_UPLOAD_FAILED uint32 = 300021         // S3 上传失败
 const S3_DELETE_FAILED uint32 = 300022         // S3 删除失败
+
+// 分享模块 (400xxx)
+const SHARE_NOT_EXIST uint32 = 400001         // 分享不存在
+const SHARE_EXPIRED uint32 = 400002           // 分享已过期
+const SHARE_CODE_ERROR uint32 = 400003        // 提取码错误
+const SHARE_CANCELLED uint32 = 400004         // 分享已取消
+const SHARE_BANNED uint32 = 400005            // 分享已被封禁
+const SHARE_FILE_NOT_EXIST uint32 = 400006    // 分享的文件不存在
+const SHARE_CREATE_FAILED uint32 = 400007     // 创建分享失败
+const SHARE_ALREADY_EXISTS uint32 = 400008    // 该文件已被分享
+const SHARE_SAVE_FAILED uint32 = 400009       // 保存分享失败
+const SHARE_PERMISSION_DENIED uint32 = 400010 // 无权操作此分享

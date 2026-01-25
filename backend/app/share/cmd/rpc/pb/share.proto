@@ -1,0 +1,204 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+
+package pb;
+
+// =====================================
+// 数据模型 (Data Models)
+// =====================================
+
+// 分享记录信息
+message ShareInfo {
+  int64  id = 1;
+  string identity = 2;              // 分享唯一标识
+  int64  userId = 3;                // 分享者ID
+  string repositoryIdentity = 4;   // 关联文件Identity
+  string code = 5;                  // 提取码
+  int64  clickNum = 6;              // 点击次数
+  int64  expiredTime = 7;           // 失效时间戳（0=永久）
+  int64  status = 8;                // 状态 0:正常 1:已封禁
+  int64  createTime = 9;            // 创建时间
+  int64  updateTime = 10;           // 更新时间
+}
+
+// 分享文件信息（从file服务获取后组装）
+message ShareFileInfo {
+  string identity = 1;
+  string name = 2;
+  string ext = 3;
+  uint64 size = 4;
+  bool   isDir = 5;
+  string hash = 6;                  // 文件hash（用于保存时判断秒传）
+  int64  parentId = 7;              // 父目录ID（文件夹内文件需要）
+}
+
+// =====================================
+// 创建分享
+// =====================================
+message CreateShareReq {
+  int64  userId = 1;
+  string repositoryIdentity = 2;   // 文件Identity
+  int64  expiredType = 3;           // 有效期类型: 0永久 1:1天 7:7天 30:30天
+  bool   hasCode = 4;               // 是否需要提取码
+}
+
+message CreateShareResp {
+  string identity = 1;              // 分享标识
+  string code = 2;                  // 提取码（如果设置了）
+}
+
+// =====================================
+// 获取分享列表
+// =====================================
+message GetShareListReq {
+  int64 userId = 1;
+  int64 page = 2;
+  int64 pageSize = 3;
+}
+
+message GetShareListResp {
+  repeated ShareInfo list = 1;
+  int64 total = 2;
+}
+
+// =====================================
+// 取消分享
+// =====================================
+message CancelShareReq {
+  int64 userId = 1;
+  repeated string identities = 2;  // 分享标识列表
+}
+
+message CancelShareResp {
+  int64 cancelledCount = 1;
+}
+
+// =====================================
+// 更新分享
+// =====================================
+message UpdateShareReq {
+  int64  userId = 1;
+  string identity = 2;              // 分享标识
+  int64  expiredType = 3;           // 新的有效期类型（-1表示不修改）
+  string code = 4;                  // 新的提取码（空字符串=取消提取码，-1表示不修改）
+  bool   updateCode = 5;            // 是否更新提取码
+}
+
+message UpdateShareResp {
+}
+
+// =====================================
+// 获取分享详情（验证提取码）
+// =====================================
+message GetShareDetailReq {
+  string identity = 1;              // 分享标识
+  string code = 2;                  // 提取码
+}
+
+message GetShareDetailResp {
+  ShareInfo share = 1;              // 分享信息
+  ShareFileInfo file = 2;           // 分享的文件信息
+  string sharerName = 3;            // 分享者名称
+  repeated ShareFileInfo children = 4;  // 如果是文件夹，包含子文件列表
+}
+
+// =====================================
+// 获取分享下载链接
+// =====================================
+message GetShareDownloadUrlReq {
+  string identity = 1;              // 分享标识
+  string code = 2;                  // 提取码
+  string fileIdentity = 3;          // 要下载的文件Identity（文件夹分享时需要指定）
+}
+
+message GetShareDownloadUrlResp {
+  string url = 1;                   // 下载链接
+}
+
+// =====================================
+// 保存分享到网盘
+// =====================================
+message SaveShareReq {
+  int64  userId = 1;                // 保存者ID
+  string identity = 2;              // 分享标识
+  string code = 3;                  // 提取码
+  repeated string fileIdentities = 4;  // 要保存的文件Identity列表
+  int64  targetFolderId = 5;        // 目标文件夹ID（0=根目录）
+}
+
+message SaveShareResp {
+  int64 savedCount = 1;             // 保存成功的文件数量
+}
+
+// =====================================
+// 内部方法
+// =====================================
+
+// 根据分享标识获取分享信息（供其他服务调用）
+message GetShareByIdentityReq {
+  string identity = 1;
+}
+
+message GetShareByIdentityResp {
+  ShareInfo share = 1;
+}
+
+// 增加点击次数
+message IncrClickNumReq {
+  string identity = 1;
+}
+
+message IncrClickNumResp {
+}
+
+// 验证分享是否有效（检查过期、状态等）
+message ValidateShareReq {
+  string identity = 1;
+  string code = 2;
+}
+
+message ValidateShareResp {
+  bool   valid = 1;
+  string reason = 2;                // 无效原因
+  ShareInfo share = 3;              // 有效时返回分享信息
+}
+
+// =====================================
+// 服务定义 (Service Definition)
+// =====================================
+
+service ShareService {
+  // -------- 分享管理 --------
+  // 创建分享
+  rpc CreateShare(CreateShareReq) returns(CreateShareResp);
+  
+  // 获取分享列表
+  rpc GetShareList(GetShareListReq) returns(GetShareListResp);
+  
+  // 取消分享
+  rpc CancelShare(CancelShareReq) returns(CancelShareResp);
+  
+  // 更新分享
+  rpc UpdateShare(UpdateShareReq) returns(UpdateShareResp);
+
+  // -------- 分享访问 --------
+  // 获取分享详情（验证提取码）
+  rpc GetShareDetail(GetShareDetailReq) returns(GetShareDetailResp);
+  
+  // 获取分享下载链接
+  rpc GetShareDownloadUrl(GetShareDownloadUrlReq) returns(GetShareDownloadUrlResp);
+  
+  // 保存分享到网盘
+  rpc SaveShare(SaveShareReq) returns(SaveShareResp);
+
+  // -------- 内部方法 --------
+  // 根据标识获取分享信息
+  rpc GetShareByIdentity(GetShareByIdentityReq) returns(GetShareByIdentityResp);
+  
+  // 增加点击次数
+  rpc IncrClickNum(IncrClickNumReq) returns(IncrClickNumResp);
+  
+  // 验证分享是否有效
+  rpc ValidateShare(ValidateShareReq) returns(ValidateShareResp);
+}

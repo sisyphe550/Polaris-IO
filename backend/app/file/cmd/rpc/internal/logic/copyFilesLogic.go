@@ -28,9 +28,16 @@ func NewCopyFilesLogic(ctx context.Context, svcCtx *svc.ServiceContext) *CopyFil
 }
 
 // CopyFiles 复制文件/文件夹
+// 支持跨用户复制：UserId 为源文件所有者，TargetUserId 为目标用户（0 表示同用户复制）
 func (l *CopyFilesLogic) CopyFiles(in *pb.CopyFilesReq) (*pb.CopyFilesResp, error) {
 	if in.UserId == 0 || len(in.Identities) == 0 {
 		return nil, errors.New("userId and identities are required")
+	}
+
+	// 确定目标用户ID（跨用户复制或同用户复制）
+	targetUserId := in.UserId
+	if in.TargetUserId > 0 {
+		targetUserId = in.TargetUserId
 	}
 
 	// 检查目标目录是否存在（如果不是根目录）
@@ -46,8 +53,8 @@ func (l *CopyFilesLogic) CopyFiles(in *pb.CopyFilesReq) (*pb.CopyFilesResp, erro
 		if targetFile.Ext != "" || targetFile.Hash != "" {
 			return nil, xerr.NewErrCode(xerr.FILE_PARENT_NOT_EXIST)
 		}
-		// 检查权限
-		if int64(targetFile.UserId) != in.UserId {
+		// 检查目标文件夹权限（应属于目标用户）
+		if int64(targetFile.UserId) != targetUserId {
 			return nil, xerr.NewErrCode(xerr.FILE_PARENT_NOT_EXIST)
 		}
 	}
@@ -65,18 +72,18 @@ func (l *CopyFilesLogic) CopyFiles(in *pb.CopyFilesReq) (*pb.CopyFilesResp, erro
 			continue
 		}
 
-		// 权限验证
+		// 源文件权限验证（应属于源用户）
 		if int64(file.UserId) != in.UserId {
 			continue
 		}
 
 		// 如果是文件夹，需要递归复制
 		if file.Ext == "" && file.Hash == "" {
-			count := l.copyFolder(file, in.TargetId, in.UserId)
+			count := l.copyFolder(file, in.TargetId, targetUserId)
 			copiedCount += count
 		} else {
 			// 复制文件
-			if err := l.copyFile(file, in.TargetId, in.UserId); err != nil {
+			if err := l.copyFile(file, in.TargetId, targetUserId); err != nil {
 				l.Logger.Errorf("CopyFiles copyFile error: %v", err)
 				continue
 			}
@@ -116,12 +123,13 @@ func (l *CopyFilesLogic) copyFile(src *model.UserRepository, targetId int64, use
 }
 
 // copyFolder 递归复制文件夹
-func (l *CopyFilesLogic) copyFolder(src *model.UserRepository, targetId int64, userId int64) int64 {
-	// 创建新文件夹
+// src: 源文件夹, targetId: 目标父目录ID, targetUserId: 目标用户ID
+func (l *CopyFilesLogic) copyFolder(src *model.UserRepository, targetId int64, targetUserId int64) int64 {
+	// 创建新文件夹（属于目标用户）
 	newFolder := &model.UserRepository{
 		Identity: uuid.New().String(),
 		Hash:     "",
-		UserId:   uint64(userId),
+		UserId:   uint64(targetUserId),
 		ParentId: uint64(targetId),
 		Name:     src.Name,
 		Ext:      "",
@@ -138,9 +146,9 @@ func (l *CopyFilesLogic) copyFolder(src *model.UserRepository, targetId int64, u
 	newFolderId, _ := result.LastInsertId()
 	var copiedCount int64 = 1
 
-	// 查询子文件/文件夹
+	// 查询子文件/文件夹（使用源文件夹的所有者ID）
 	builder := l.svcCtx.UserRepositoryModel.SelectBuilder().
-		Where("user_id = ?", userId).
+		Where("user_id = ?", src.UserId).
 		Where("parent_id = ?", src.Id)
 
 	children, err := l.svcCtx.UserRepositoryModel.FindAll(l.ctx, builder, "")
@@ -149,12 +157,12 @@ func (l *CopyFilesLogic) copyFolder(src *model.UserRepository, targetId int64, u
 		return copiedCount
 	}
 
-	// 递归复制子项
+	// 递归复制子项（复制到目标用户）
 	for _, child := range children {
 		if child.Ext == "" && child.Hash == "" {
-			copiedCount += l.copyFolder(child, newFolderId, userId)
+			copiedCount += l.copyFolder(child, newFolderId, targetUserId)
 		} else {
-			if err := l.copyFile(child, newFolderId, userId); err == nil {
+			if err := l.copyFile(child, newFolderId, targetUserId); err == nil {
 				copiedCount++
 			}
 		}
