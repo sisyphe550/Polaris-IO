@@ -6,6 +6,7 @@ import (
 	"polaris-io/backend/app/file/model"
 	fileMongo "polaris-io/backend/app/file/mongo"
 	"polaris-io/backend/app/mqueue/cmd/job/internal/config"
+	shareModel "polaris-io/backend/app/share/model"
 	"polaris-io/backend/app/user/cmd/rpc/usercenter"
 	"polaris-io/backend/pkg/s3client"
 
@@ -26,8 +27,11 @@ type ServiceContext struct {
 	MongoClient   *mongo.Client
 	FileMetaModel fileMongo.FileMetaModel
 
-	// MySQL Model
+	// MySQL Model (File DB)
 	UserRepositoryModel model.UserRepositoryModel
+
+	// MySQL Model (Share DB)
+	ShareModel shareModel.ShareModel
 
 	// Usercenter RPC Client
 	UsercenterRpc usercenter.Usercenter
@@ -62,8 +66,11 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	logx.Info("MongoDB connected successfully")
 	mongoDatabase := mongoClient.Database(c.MongoDB.Database)
 
-	// 初始化 MySQL 连接
+	// 初始化 MySQL 连接 (File DB)
 	sqlConn := sqlx.NewMysql(c.DB.DataSource)
+
+	// 初始化 MySQL 连接 (Share DB)
+	shareSqlConn := sqlx.NewMysql(c.ShareDB.DataSource)
 
 	return &ServiceContext{
 		Config: c,
@@ -75,8 +82,11 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		MongoClient:   mongoClient,
 		FileMetaModel: fileMongo.NewFileMetaModel(mongoDatabase),
 
-		// MySQL Model
+		// MySQL Model (File DB)
 		UserRepositoryModel: model.NewUserRepositoryModel(sqlConn, c.Cache),
+
+		// MySQL Model (Share DB)
+		ShareModel: shareModel.NewShareModel(shareSqlConn),
 
 		// Usercenter RPC Client
 		UsercenterRpc: usercenter.NewUsercenter(zrpc.MustNewClient(c.UsercenterRpcConf)),

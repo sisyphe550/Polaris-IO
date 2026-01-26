@@ -19,4 +19,10 @@ type Config struct {
 
 	// Usercenter RPC 客户端配置
 	UsercenterRpcConf zrpc.RpcClientConf
+
+	// Asynq 配置（异步任务队列）
+	Asynq struct {
+		Addr     string
+		Password string
+	}
 }

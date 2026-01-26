@@ -24,6 +24,12 @@ UsercenterRpcConf:
   NonBlock: true
   Timeout: 5000
 
+# Asynq 配置（异步任务队列）
+# 本地开发: 127.0.0.1:36379 | Docker 容器内: redis:6379
+Asynq:
+  Addr: 127.0.0.1:36379
+  Password: polaris
+
 # 链路追踪
 # 本地开发: 127.0.0.1:14268 | Docker 容器: jaeger:14268
 Telemetry:

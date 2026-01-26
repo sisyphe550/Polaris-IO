@@ -10,6 +10,7 @@ import (
 	"polaris-io/backend/app/share/cmd/rpc/internal/svc"
 	"polaris-io/backend/app/share/cmd/rpc/pb"
 	"polaris-io/backend/app/share/model"
+	"polaris-io/backend/pkg/asynqjob"
 	"polaris-io/backend/pkg/xerr"
 
 	"github.com/google/uuid"
@@ -86,6 +87,21 @@ func (l *CreateShareLogic) CreateShare(in *pb.CreateShareReq) (*pb.CreateShareRe
 	if err != nil {
 		l.Logger.Errorf("CreateShare Insert error: %v", err)
 		return nil, xerr.NewErrCode(xerr.SHARE_CREATE_FAILED)
+	}
+
+	// 7. 如果设置了过期时间，入队分享过期任务
+	if expiredTime > 0 && l.svcCtx.AsynqClient != nil {
+		delay := time.Until(time.Unix(int64(expiredTime), 0))
+		if delay > 0 {
+			err = l.svcCtx.AsynqClient.EnqueueShareExpire(l.ctx, asynqjob.ShareExpirePayload{
+				ShareIdentity: identity,
+				UserId:        in.UserId,
+			}, delay)
+			if err != nil {
+				// 入队失败只记录日志，不影响主流程
+				l.Logger.Errorf("CreateShare EnqueueShareExpire error: %v", err)
+			}
+		}
 	}
 
 	return &pb.CreateShareResp{

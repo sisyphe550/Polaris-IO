@@ -22,6 +22,12 @@ type Config struct {
 	// Usercenter RPC 客户端配置（获取用户信息、验证配额）
 	UsercenterRpcConf zrpc.RpcClientConf
 
+	// Asynq 配置（异步任务队列）
+	Asynq struct {
+		Addr     string
+		Password string
+	}
+
 	// 分享配置
 	Share struct {
 		BaseUrl    string // 分享链接前缀

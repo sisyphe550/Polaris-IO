@@ -23,10 +23,15 @@ MongoDB:
   Uri: mongodb://root:polaris-io-mongo-2026@127.0.0.1:27017
   Database: polaris_file
 
-# MySQL 配置（用于删除 user_repository）
+# MySQL 配置（File 数据库: polaris_file）
 # 本地开发: 127.0.0.1:33069 | Docker 容器内: mysql:3306
 DB:
   DataSource: root:root@tcp(127.0.0.1:33069)/polaris_file?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
+
+# MySQL 配置（Share 数据库: polaris_share）
+# 本地开发: 127.0.0.1:33069 | Docker 容器内: mysql:3306
+ShareDB:
+  DataSource: root:root@tcp(127.0.0.1:33069)/polaris_share?charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai
 
 # 缓存配置 (sqlc 缓存)
 Cache:
@@ -40,6 +45,20 @@ UsercenterRpcConf:
     - 127.0.0.1:2001
   NonBlock: true
   Timeout: 5000
+
+# 监控
+Prometheus:
+  Host: 0.0.0.0
+  Port: 4009
+  Path: /metrics
+
+# 链路追踪
+# 本地开发: 127.0.0.1:14268 | Docker 容器: jaeger:14268
+Telemetry:
+  Name: mqueue-job
+  Endpoint: http://127.0.0.1:14268/api/traces
+  Sampler: 1.0
+  Batcher: jaeger
 
 # 日志
 Log:
