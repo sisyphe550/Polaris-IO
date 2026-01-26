@@ -9,15 +9,18 @@ import (
 
 // RegisterHandlers 注册所有任务处理器
 func RegisterHandlers(mux *asynq.ServeMux, svcCtx *svc.ServiceContext, asynqClient *asynq.Client) {
-	// S3 文件清理任务
+	// S3 文件清理任务（高优先级）
 	mux.HandleFunc(asynqjob.TypeS3Cleanup, NewS3CleanupHandler(svcCtx).ProcessTask)
 
-	// 回收站批量清理任务
+	// 回收站批量清理任务（默认优先级）
 	mux.HandleFunc(asynqjob.TypeTrashClear, NewTrashClearHandler(svcCtx, asynqClient).ProcessTask)
 
-	// TODO: 上传超时检测任务
-	// mux.HandleFunc(asynqjob.TypeUploadTimeout, NewUploadTimeoutHandler(svcCtx).ProcessTask)
+	// 上传超时检测任务（低优先级）
+	mux.HandleFunc(asynqjob.TypeUploadTimeout, NewUploadTimeoutHandler(svcCtx, asynqClient).ProcessTask)
 
-	// TODO: 配额退还任务
-	// mux.HandleFunc(asynqjob.TypeQuotaRefund, NewQuotaRefundHandler(svcCtx).ProcessTask)
+	// 配额退还任务（默认优先级）
+	mux.HandleFunc(asynqjob.TypeQuotaRefund, NewQuotaRefundHandler(svcCtx).ProcessTask)
+
+	// 分享过期任务（低优先级）
+	mux.HandleFunc(asynqjob.TypeShareExpire, NewShareExpireHandler(svcCtx).ProcessTask)
 }

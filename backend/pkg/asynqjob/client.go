@@ -128,3 +128,28 @@ func (c *AsynqClient) EnqueueQuotaRefund(ctx context.Context, payload QuotaRefun
 		info.ID, payload.UserId, payload.Size)
 	return nil
 }
+
+// EnqueueShareExpire 入队分享过期任务（延迟执行）
+func (c *AsynqClient) EnqueueShareExpire(ctx context.Context, payload ShareExpirePayload, delay time.Duration) error {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	task := asynq.NewTask(TypeShareExpire, data)
+
+	// 延迟执行，最多重试 1 次
+	info, err := c.client.EnqueueContext(ctx, task,
+		asynq.ProcessIn(delay),
+		asynq.MaxRetry(1),
+		asynq.Queue("low"),
+	)
+	if err != nil {
+		logx.WithContext(ctx).Errorf("EnqueueShareExpire failed: %v", err)
+		return err
+	}
+
+	logx.WithContext(ctx).Infof("EnqueueShareExpire success: taskId=%s, shareIdentity=%s, delay=%v",
+		info.ID, payload.ShareIdentity, delay)
+	return nil
+}

@@ -28,6 +28,8 @@ type (
 		IncrClickNum(ctx context.Context, identity string) error
 		// 根据文件 identity 查询分享（检查文件是否已被分享）
 		FindOneByRepositoryIdentity(ctx context.Context, userId uint64, repositoryIdentity string) (*Share, error)
+		// 设置分享为过期状态（软删除）
+		SetExpiredByIdentity(ctx context.Context, identity string) error
 	}
 
 	customShareModel struct {
@@ -142,4 +144,25 @@ func (m *customShareModel) FindOneByRepositoryIdentity(ctx context.Context, user
 	default:
 		return nil, err
 	}
+}
+
+// SetExpiredByIdentity 设置分享为过期状态（软删除）
+func (m *customShareModel) SetExpiredByIdentity(ctx context.Context, identity string) error {
+	query := fmt.Sprintf("update %s set del_state = ?, delete_time = unix_timestamp(), version = version + 1 where identity = ? and del_state = ?",
+		m.table)
+	result, err := m.conn.ExecCtx(ctx, query, globalkey.DelStateYes, identity, globalkey.DelStateNo)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return ErrNotFound // 分享不存在或已过期
+	}
+
+	return nil
 }

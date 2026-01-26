@@ -17,6 +17,10 @@ const (
 	// TypeQuotaRefund 配额退还任务
 	// 上传失败或取消时退还用户配额
 	TypeQuotaRefund = "quota:refund"
+
+	// TypeShareExpire 分享过期任务
+	// 分享到期后自动将状态置为 expired
+	TypeShareExpire = "share:expire"
 )
 
 // S3CleanupPayload S3 清理任务的 payload
@@ -45,4 +49,10 @@ type QuotaRefundPayload struct {
 	UserId int64  `json:"userId"` // 用户 ID
 	Size   uint64 `json:"size"`   // 退还大小
 	Reason string `json:"reason"` // 退还原因
+}
+
+// ShareExpirePayload 分享过期任务的 payload
+type ShareExpirePayload struct {
+	ShareIdentity string `json:"shareIdentity"` // 分享 identity
+	UserId        int64  `json:"userId"`        // 用户 ID（用于日志追踪）
 }

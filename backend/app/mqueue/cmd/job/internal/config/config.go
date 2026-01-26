@@ -31,8 +31,13 @@ type Config struct {
 		Database string
 	}
 
-	// MySQL 配置
+	// MySQL 配置（File 数据库: polaris_file）
 	DB struct {
+		DataSource string
+	}
+
+	// Share MySQL 配置（Share 数据库: polaris_share）
+	ShareDB struct {
 		DataSource string
 	}
 
