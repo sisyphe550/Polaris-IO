@@ -50,4 +50,4 @@ services:
 networks:
    polaris-net:
     external: true
-    name: whiteboard-net
+    name: polaris-net
