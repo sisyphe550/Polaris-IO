@@ -3,7 +3,9 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
+	fileMongo "polaris-io/backend/app/file/mongo"
 	"polaris-io/backend/app/mqueue/cmd/job/internal/svc"
 	"polaris-io/backend/pkg/asynqjob"
 
@@ -48,12 +50,16 @@ func (h *UploadTimeoutHandler) ProcessTask(ctx context.Context, task *asynq.Task
 	// 检查 file_meta 是否存在该 hash（上传是否完成）
 	meta, err := h.svcCtx.FileMetaModel.FindByHash(ctx, payload.Hash)
 	if err != nil {
-		// 查询出错，记录日志，返回错误让 asynq 重试
-		logx.Errorf("UploadTimeoutHandler: FindByHash error: %v, hash=%s", err, payload.Hash)
-		return err
-	}
-
-	if meta != nil {
+		if errors.Is(err, fileMongo.ErrNotFound) {
+			// 文件元数据不存在，说明用户没有完成上传
+			// 这是正常情况，需要退还配额
+			logx.Infof("UploadTimeoutHandler: file meta not found, upload not completed, hash=%s", payload.Hash)
+		} else {
+			// 其他数据库错误，返回错误让 asynq 重试
+			logx.Errorf("UploadTimeoutHandler: FindByHash error: %v, hash=%s", err, payload.Hash)
+			return err
+		}
+	} else if meta != nil {
 		// 文件已上传完成，无需退还配额
 		logx.Infof("UploadTimeoutHandler: file upload completed, skip refund, userId=%d, hash=%s",
 			payload.UserId, payload.Hash)
