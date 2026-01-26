@@ -2,6 +2,8 @@
 
 一个基于 Go-Zero 微服务架构的企业级私有云盘系统，支持 PB 级数据存储、高并发上传下载。
 
+> 本项目参考了 [go-zero-looklook](https://github.com/Mikaelemmmm/go-zero-looklook.git) 最佳实践，学习其全栈微服务架构设计与工程化规范，并在此基础上实现了分布式云存储业务场景。
+
 ## 核心特性
 
 - **文件秒传**：基于 SHA256 哈希的秒传机制，秒传率 30%+
